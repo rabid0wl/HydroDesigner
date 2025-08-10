@@ -15,7 +15,6 @@ interface OpenChannelDesignProps {
 }
 
 type Shape = "rectangular" | "trapezoidal" | "triangular" | "circular";
-type LiningType = "earth-lining" | "hard-surface";
 
 interface Results {
   flowDepth: string;
@@ -29,16 +28,29 @@ interface Results {
   topWidth: string;
 }
 
+const manningData = [
+    { label: "Concrete, Finished", value: "0.012", type: "hard-surface" },
+    { label: "Earth, Clean, Straight", value: "0.019", type: "earth-lining" },
+    { label: "Earth, Winding, Some Weeds", value: "0.025", type: "earth-lining" },
+    { label: "Gravel, Firm, Clean", value: "0.027", type: "earth-lining" },
+    { label: "Rock Cut, Smooth", value: "0.033", type: "hard-surface" },
+    { label: "Rock Cut, Jagged", value: "0.040", type: "hard-surface" },
+    { label: "Grass, Short", value: "0.028", type: "earth-lining" },
+    { label: "Grass, High", value: "0.040", type: "earth-lining" },
+    { label: "Brush & Weeds, Dense", value: "0.100", type: "earth-lining" },
+    { label: "Custom", value: "custom", type: "custom" },
+];
+
+
 export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
   const [flowRate, setFlowRate] = useState("");
   const [channelSlope, setChannelSlope] = useState("");
-  const [manningN, setManningN] = useState("");
+  const [manningN, setManningN] = useState("0.012");
+  const [customManningN, setCustomManningN] = useState("");
   const [channelShape, setChannelShape] = useState<Shape | "">("rectangular");
   const [bottomWidth, setBottomWidth] = useState("");
   const [sideSlope, setSideSlope] = useState("");
-  const [liningType, setLiningType] = useState<LiningType>("hard-surface");
-
-
+  
   const [results, setResults] = useState<Results | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,8 +60,29 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
   const lengthUnit = isMetric ? 'm' : 'ft';
   const velocityUnit = isMetric ? 'm/s' : 'ft/s';
 
+  const handleManningSelect = (value: string) => {
+    if (value === 'custom') {
+        setManningN('custom');
+    } else {
+        const selectedManning = manningData.find(m => m.value === value);
+        if (selectedManning) {
+            setManningN(selectedManning.value);
+        }
+    }
+  }
+
+  const getLiningTypeFromManning = () => {
+    if (manningN === 'custom') {
+        // Default to hard-surface for custom, or could ask user
+        return 'hard-surface';
+    }
+    const selected = manningData.find(m => m.value === manningN);
+    return selected?.type || 'hard-surface';
+  }
+
+
   const calculateFreeboardsFromChart = (capacity: number) => {
-    // Formulas provided by the user based on the freeboard chart.
+    const liningType = getLiningTypeFromManning();
     
     // Top curve: Height of Canal Bank Above W.S.
     const bankFreeboard = 0.49 * Math.pow(capacity, 0.28);
@@ -82,7 +115,7 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
 
     const Q = parseFloat(flowRate);
     const S = parseFloat(channelSlope);
-    const n = parseFloat(manningN);
+    const n = manningN === 'custom' ? parseFloat(customManningN) : parseFloat(manningN);
     const b = parseFloat(bottomWidth);
     const z = parseFloat(sideSlope);
 
@@ -206,8 +239,8 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <Card className="lg:col-span-1">
         <CardHeader>
-          <CardTitle>Channel Parameters</CardTitle>
-          <CardDescription>Enter the properties of the channel and flow.</CardDescription>
+          <CardTitle>Channel Design</CardTitle>
+          <CardDescription>Enter the properties of the channel and flow to calculate the design parameters.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
@@ -219,9 +252,28 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
             <Input id="channel-slope" placeholder="e.g., 0.005" type="number" value={channelSlope} onChange={(e) => setChannelSlope(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="manning-n">Manning's Roughness (n)</Label>
-            <Input id="manning-n" placeholder="e.g., 0.013" type="number" value={manningN} onChange={(e) => setManningN(e.target.value)} />
+            <Label htmlFor="manning-material">Channel Material (Manning's n)</Label>
+            <Select onValueChange={handleManningSelect} value={manningN}>
+              <SelectTrigger id="manning-material">
+                <SelectValue placeholder="Select material" />
+              </SelectTrigger>
+              <SelectContent>
+                {manningData.map(m => (
+                    <SelectItem key={m.label} value={m.value}>
+                        {m.label} ({m.value !== 'custom' && `n=${m.value}`})
+                    </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+
+          {manningN === 'custom' && (
+            <div className="space-y-2 animate-in fade-in">
+              <Label htmlFor="manning-n">Custom Manning's Roughness (n)</Label>
+              <Input id="manning-n" placeholder="Enter custom 'n' value" type="number" value={customManningN} onChange={(e) => setCustomManningN(e.target.value)} />
+            </div>
+          )}
+          
           <div className="space-y-2">
             <Label htmlFor="channel-shape">Channel Shape</Label>
             <Select onValueChange={(value) => setChannelShape(value as Shape)} value={channelShape}>
@@ -236,20 +288,6 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
               </SelectContent>
             </Select>
           </div>
-           {!isMetric && (
-              <div className="space-y-2 animate-in fade-in">
-                <Label htmlFor="lining-type">Lining Type (for Freeboard)</Label>
-                <Select onValueChange={(value) => setLiningType(value as LiningType)} value={liningType}>
-                  <SelectTrigger id="lining-type">
-                    <SelectValue placeholder="Select lining type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="earth-lining">Earth Lining</SelectItem>
-                    <SelectItem value="hard-surface">Hard Surface / Concrete / Membrane</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
           
           <div className="space-y-2">
               <Label htmlFor="bottom-width">Bottom Width ({lengthUnit})</Label>

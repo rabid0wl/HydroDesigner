@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles, AlertTriangle, Percent } from "lucide-react";
+import { Loader2, Sparkles, AlertTriangle, Percent, BrainCircuit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { DesignRecommendationOutput } from "@/ai/flows/design-recommendation";
 import { getDesignRecommendationAction } from "@/lib/actions";

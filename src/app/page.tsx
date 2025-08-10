@@ -28,6 +28,8 @@ import { PipeSizing } from "@/components/pipe-sizing";
 import { PumpDesign } from "@/components/pump-design";
 import { AiDesignAssistant } from "@/components/ai-design-assistant";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 type View =
   | "dashboard"
@@ -39,6 +41,7 @@ type View =
 
 export default function Home() {
   const [activeView, setActiveView] = React.useState<View>("dashboard");
+  const [units, setUnits] = React.useState<"metric" | "us">("metric");
 
   const renderView = () => {
     switch (activeView) {
@@ -99,11 +102,27 @@ export default function Home() {
         </SidebarContent>
       </Sidebar>
       <SidebarInset className="bg-background">
-        <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:h-16 sm:px-6">
-          <SidebarTrigger className="flex md:hidden" />
-          <h2 className="text-lg font-semibold sm:text-xl">
-            {menuItems.find((item) => item.id === activeView)?.label}
-          </h2>
+        <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:h-16 sm:px-6">
+          <div className="flex items-center gap-4">
+            <SidebarTrigger className="flex md:hidden" />
+            <h2 className="text-lg font-semibold sm:text-xl">
+              {menuItems.find((item) => item.id === activeView)?.label}
+            </h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="units-toggle" className="text-sm">
+              Metric
+            </Label>
+            <Switch
+              id="units-toggle"
+              checked={units === "us"}
+              onCheckedChange={(checked) => setUnits(checked ? "us" : "metric")}
+              aria-label="Toggle units"
+            />
+            <Label htmlFor="units-toggle" className="text-sm">
+              US
+            </Label>
+          </div>
         </header>
         <main className="flex-1 overflow-auto p-4 sm:p-6">{renderView()}</main>
       </SidebarInset>

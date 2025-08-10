@@ -371,7 +371,7 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
             <CardTitle>Channel Visualization</CardTitle>
             <CardDescription>A cross-section of the designed channel.</CardDescription>
           </CardHeader>
-          <CardContent className="flex justify-center bg-muted min-h-[450px] rounded-lg p-4">
+          <CardContent className="bg-muted min-h-[450px] rounded-lg p-4">
              {results && channelShape ? (
               <ChannelVisualization
                 shape={channelShape as 'rectangular' | 'trapezoidal'}
@@ -382,7 +382,9 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
                 units={units}
               />
             ) : (
-                <p className="text-muted-foreground">Enter parameters and calculate to see visualization</p>
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-muted-foreground">Enter parameters and calculate to see visualization</p>
+                </div>
             )}
           </CardContent>
         </Card>
@@ -409,7 +411,7 @@ const ChannelVisualization = ({ shape, bottomWidth, sideSlope, flowDepth, totalD
 
   const totalTopWidth = shape === 'rectangular' ? bottomWidth : bottomWidth + 2 * sideSlope * totalDepth;
   
-  const viewPadding = 50; 
+  const viewPadding = 50;
   const containerWidth = 600; 
   const containerHeight = 400;
 

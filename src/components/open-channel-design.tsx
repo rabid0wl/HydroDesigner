@@ -414,22 +414,21 @@ const ChannelVisualization = ({ shape, bottomWidth, sideSlope, flowDepth, totalD
   const freeboard = totalDepth - flowDepth;
 
   const totalTopWidth = shape === 'rectangular' ? bottomWidth : bottomWidth + 2 * sideSlope * totalDepth;
-  const waterTopWidth = shape === 'rectangular' ? bottomWidth : bottomWidth + 2 * sideSlope * flowDepth;
   
-  const viewWidth = totalTopWidth * 1.25;
-  const viewHeight = totalDepth * 1.25;
+  const viewPadding = 30; // Add padding for labels
+  const viewWidth = totalTopWidth + viewPadding * 2;
+  const viewHeight = totalDepth + viewPadding * 2;
 
   const containerWidth = 500;
   const containerHeight = (containerWidth / viewWidth) * viewHeight;
   
-  const scale = containerWidth / viewWidth;
+  const scale = (containerWidth - viewPadding * 2) / totalTopWidth;
 
   const scaled = {
     totalDepth: totalDepth * scale,
     flowDepth: flowDepth * scale,
     bottomWidth: bottomWidth * scale,
     totalTopWidth: totalTopWidth * scale,
-    waterTopWidth: waterTopWidth * scale,
   };
 
   const xOffset = (containerWidth - scaled.totalTopWidth) / 2;
@@ -448,7 +447,7 @@ const ChannelVisualization = ({ shape, bottomWidth, sideSlope, flowDepth, totalD
   const waterSideSlopeOffset = shape === 'rectangular' ? 0 : sideSlope * flowDepth * scale;
   const waterPoints = [
     { x: xOffset + totalDepthSideSlopeOffset - waterSideSlopeOffset, y: waterY },
-    { x: xOffset + scaled.totalTopWidth - totalDepthSideSlopeOffset + waterSideSlopeOffset, y: waterY },
+    { x: xOffset + scaled.totalTopWidth - (totalDepthSideSlopeOffset - waterSideSlopeOffset), y: waterY },
     { x: xOffset + scaled.totalTopWidth - totalDepthSideSlopeOffset, y: yOffset + scaled.totalDepth },
     { x: xOffset + totalDepthSideSlopeOffset, y: yOffset + scaled.totalDepth },
   ];
@@ -479,19 +478,19 @@ const ChannelVisualization = ({ shape, bottomWidth, sideSlope, flowDepth, totalD
               <text x={xOffset - 15} y={yOffset + scaled.totalDepth / 2} transform={`rotate(-90, ${xOffset - 15}, ${yOffset + scaled.totalDepth/2})`} textAnchor="middle" dominantBaseline="middle" style={textStyle}>{`${totalDepth.toFixed(2)} ${lengthUnit}`}</text>
               
               {/* Flow Depth & Freeboard */}
-              <line x1={xOffset + scaled.totalTopWidth + 10} y1={yOffset + scaled.totalDepth - scaled.flowDepth} x2={xOffset + scaled.totalTopWidth + 10} y2={yOffset + scaled.totalDepth} stroke="hsl(var(--muted-foreground))" strokeWidth="0.5" strokeDasharray="2 2" />
-              <text x={xOffset + scaled.totalTopWidth + 15} y={yOffset + scaled.totalDepth - scaled.flowDepth / 2} textAnchor="start" dominantBaseline="middle" style={textStyle}>{`Flow: ${flowDepth.toFixed(2)}`}</text>
+              <line x1={xOffset + scaled.totalTopWidth + 10} y1={waterY} x2={xOffset + scaled.totalTopWidth + 10} y2={yOffset + scaled.totalDepth} stroke="hsl(var(--muted-foreground))" strokeWidth="0.5" strokeDasharray="2 2" />
+              <text x={xOffset + scaled.totalTopWidth + 15} y={waterY + scaled.flowDepth/2} textAnchor="start" dominantBaseline="middle" style={textStyle}>{`Flow: ${flowDepth.toFixed(2)}`}</text>
 
-              <line x1={xOffset + scaled.totalTopWidth + 10} y1={yOffset} x2={xOffset + scaled.totalTopWidth + 10} y2={yOffset + scaled.totalDepth - scaled.flowDepth} stroke="hsl(var(--muted-foreground))" strokeWidth="0.5" strokeDasharray="2 2" />
+              <line x1={xOffset + scaled.totalTopWidth + 10} y1={yOffset} x2={xOffset + scaled.totalTopWidth + 10} y2={waterY} stroke="hsl(var(--muted-foreground))" strokeWidth="0.5" strokeDasharray="2 2" />
               <text x={xOffset + scaled.totalTopWidth + 15} y={yOffset + (scaled.totalDepth - scaled.flowDepth)/2} textAnchor="start" dominantBaseline="middle" style={textStyle}>{`Freeboard: ${freeboard.toFixed(2)}`}</text>
               
               {/* Top Width */}
               <line x1={xOffset} y1={yOffset - 10} x2={xOffset + scaled.totalTopWidth} y2={yOffset - 10} stroke="hsl(var(--muted-foreground))" strokeWidth="0.5" strokeDasharray="2 2" />
-              <text x={xOffset + scaled.totalTopWidth / 2} y={yOffset - 15} textAnchor="middle" style={textStyle}>{`Top Width: ${totalTopWidth.toFixed(2)} ${lengthUnit}`}</text>
+              <text x={containerWidth / 2} y={yOffset - 15} textAnchor="middle" style={textStyle}>{`Top Width: ${totalTopWidth.toFixed(2)} ${lengthUnit}`}</text>
           
               {/* Bottom Width */}
               <line x1={xOffset + totalDepthSideSlopeOffset} y1={yOffset + scaled.totalDepth + 10} x2={xOffset + scaled.totalTopWidth - totalDepthSideSlopeOffset} y2={yOffset + scaled.totalDepth + 10} stroke="hsl(var(--muted-foreground))" strokeWidth="0.5" strokeDasharray="2 2" />
-              <text x={xOffset + scaled.totalTopWidth / 2} y={yOffset + scaled.totalDepth + 15} textAnchor="middle" style={textStyle}>{`${bottomWidth.toFixed(2)}`}</text>
+              <text x={containerWidth / 2} y={yOffset + scaled.totalDepth + 15} textAnchor="middle" dominantBaseline="hanging" style={textStyle}>{`Bottom: ${bottomWidth.toFixed(2)}`}</text>
           </g>
       </svg>
   );

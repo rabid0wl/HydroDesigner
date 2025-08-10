@@ -1,14 +1,14 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { BrainCircuit, Droplets, Tunnel, Turbine, Waves } from "lucide-react";
+import { BrainCircuit, Droplets, Replace, Fan, Waves } from "lucide-react";
 import Image from "next/image";
 
 const tools = [
   { name: "Open Channel Design", icon: Waves, description: "Design and analyze open channels for various flow conditions." },
-  { name: "Culvert Sizing", icon: Tunnel, description: "Determine the optimal size for culverts based on hydraulic parameters." },
+  { name: "Culvert Sizing", icon: Replace, description: "Determine the optimal size for culverts based on hydraulic parameters." },
   { name: "Pipe Sizing", icon: Droplets, description: "Calculate appropriate pipe diameters for fluid transport systems." },
-  { name: "Pump Design & Sizing", icon: Turbine, description: "Select and design pumps for your specific system requirements." },
+  { name: "Pump Design & Sizing", icon: Fan, description: "Select and design pumps for your specific system requirements." },
   { name: "AI Design Assistant", icon: BrainCircuit, description: "Get AI-powered recommendations to optimize your designs." },
 ];
 

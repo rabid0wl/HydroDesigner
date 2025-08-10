@@ -5,8 +5,8 @@ import {
   BrainCircuit,
   Droplets,
   LayoutDashboard,
-  Tunnel,
-  Turbine,
+  Fan,
+  Replace,
   Waves,
 } from "lucide-react";
 
@@ -62,9 +62,9 @@ export default function Home() {
   const menuItems = [
     { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { id: "open-channel", icon: Waves, label: "Open Channel Design" },
-    { id: "culvert-sizing", icon: Tunnel, label: "Culvert Sizing" },
+    { id: "culvert-sizing", icon: Replace, label: "Culvert Sizing" },
     { id: "pipe-sizing", icon: Droplets, label: "Pipe Sizing" },
-    { id: "pump-design", icon: Turbine, label: "Pump Design & Sizing" },
+    { id: "pump-design", icon: Fan, label: "Pump Design & Sizing" },
     { id: "ai-assistant", icon: BrainCircuit, label: "AI Design Assistant" },
   ];
 

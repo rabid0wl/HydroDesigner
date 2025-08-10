@@ -75,14 +75,13 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
   const getLiningTypeFromManning = () => {
     if (manningN === 'custom') {
         // Default to hard-surface for custom, user can override if needed
-        // Or we can add another input for this case. For now, let's assume.
         return 'hard-surface';
     }
     const selected = manningData.find(m => m.value === manningN);
     return selected?.type || 'hard-surface';
   }
 
-  const calculateFreeboardsFromChart = (capacity: number) => {
+ const calculateFreeboardsFromChart = (capacity: number) => {
     const liningType = getLiningTypeFromManning();
     
     // H ≈ 0.49 * C^0.28
@@ -436,9 +435,8 @@ const ChannelVisualization = ({ shape, bottomWidth, sideSlope, flowDepth, totalD
   const xOffset = (containerWidth - scaled.totalTopWidth) / 2;
   const yOffset = (containerHeight - scaled.totalDepth) / 2;
 
-  const totalDepthSideSlopeOffset = sideSlope * totalDepth * scale;
-  const waterDepthSideSlopeOffset = sideSlope * flowDepth * scale;
-
+  const totalDepthSideSlopeOffset = shape === 'rectangular' ? 0 : sideSlope * totalDepth * scale;
+  
   const channelPoints = [
     { x: xOffset, y: yOffset },
     { x: xOffset + scaled.totalTopWidth, y: yOffset },
@@ -446,9 +444,11 @@ const ChannelVisualization = ({ shape, bottomWidth, sideSlope, flowDepth, totalD
     { x: xOffset + totalDepthSideSlopeOffset, y: yOffset + scaled.totalDepth },
   ];
 
+  const waterY = yOffset + scaled.totalDepth - scaled.flowDepth;
+  const waterSideSlopeOffset = shape === 'rectangular' ? 0 : sideSlope * flowDepth * scale;
   const waterPoints = [
-    { x: xOffset + (scaled.totalTopWidth - scaled.waterTopWidth) / 2, y: yOffset + scaled.totalDepth - scaled.flowDepth },
-    { x: xOffset + (scaled.totalTopWidth + scaled.waterTopWidth) / 2, y: yOffset + scaled.totalDepth - scaled.flowDepth },
+    { x: xOffset + totalDepthSideSlopeOffset - waterSideSlopeOffset, y: waterY },
+    { x: xOffset + scaled.totalTopWidth - totalDepthSideSlopeOffset + waterSideSlopeOffset, y: waterY },
     { x: xOffset + scaled.totalTopWidth - totalDepthSideSlopeOffset, y: yOffset + scaled.totalDepth },
     { x: xOffset + totalDepthSideSlopeOffset, y: yOffset + scaled.totalDepth },
   ];

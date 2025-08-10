@@ -6,14 +6,34 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import type { Units } from "@/app/page";
 
+interface PipeSizingProps {
+  units: Units;
+}
 
-export function PipeSizing() {
-  const results = [
-    { diameter: "150 mm (6 in)", velocity: "1.41 m/s", headloss: "9.8 m/km" },
-    { diameter: "200 mm (8 in)", velocity: "0.80 m/s", headloss: "2.5 m/km" },
-    { diameter: "250 mm (10 in)", velocity: "0.51 m/s", headloss: "0.9 m/km" },
-  ];
+export function PipeSizing({ units }: PipeSizingProps) {
+  const isMetric = units === 'metric';
+
+  const flowUnit = isMetric ? 'L/s' : 'gpm';
+  const lengthUnit = isMetric ? 'm' : 'ft';
+  const headlossUnit = isMetric ? 'm/km' : 'ft/kft';
+  const velocityUnit = isMetric ? 'm/s' : 'ft/s';
+  
+  const results = {
+    metric: [
+      { diameter: "150 mm (6 in)", velocity: "1.41", headloss: "9.8" },
+      { diameter: "200 mm (8 in)", velocity: "0.80", headloss: "2.5" },
+      { diameter: "250 mm (10 in)", velocity: "0.51", headloss: "0.9" },
+    ],
+    us: [
+      { diameter: "6 in (150 mm)", velocity: "4.63", headloss: "10.0" },
+      { diameter: "8 in (200 mm)", velocity: "2.62", headloss: "2.5" },
+      { diameter: "10 in (250 mm)", velocity: "1.67", headloss: "0.9" },
+    ]
+  };
+
+  const currentResults = results[units];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -24,12 +44,12 @@ export function PipeSizing() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="flow-rate">Flow Rate (L/s)</Label>
-            <Input id="flow-rate" placeholder="e.g., 25" type="number" />
+            <Label htmlFor="flow-rate">Flow Rate ({flowUnit})</Label>
+            <Input id="flow-rate" placeholder={isMetric ? "e.g., 25" : "e.g., 400"} type="number" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="pipe-length">Pipe Length (m)</Label>
-            <Input id="pipe-length" placeholder="e.g., 500" type="number" />
+            <Label htmlFor="pipe-length">Pipe Length ({lengthUnit})</Label>
+            <Input id="pipe-length" placeholder={isMetric ? "e.g., 500" : "e.g., 1640"} type="number" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="pipe-material">Pipe Material</Label>
@@ -46,8 +66,8 @@ export function PipeSizing() {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="elevation-change">Elevation Change (m)</Label>
-            <Input id="elevation-change" placeholder="e.g., 10" type="number" />
+            <Label htmlFor="elevation-change">Elevation Change ({lengthUnit})</Label>
+            <Input id="elevation-change" placeholder={isMetric ? "e.g., 10" : "e.g., 33"} type="number" />
           </div>
           <Button className="w-full">Calculate Pipe Size</Button>
         </CardContent>
@@ -62,13 +82,13 @@ export function PipeSizing() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nominal Diameter</TableHead>
-                <TableHead>Velocity</TableHead>
-                <TableHead>Head Loss</TableHead>
+                <TableHead>Velocity ({velocityUnit})</TableHead>
+                <TableHead>Head Loss ({headlossUnit})</TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {results.map((result, index) => (
+              {currentResults.map((result, index) => (
                 <TableRow key={index} className={index === 1 ? "bg-primary/10" : ""}>
                   <TableCell className="font-medium">{result.diameter}</TableCell>
                   <TableCell>{result.velocity}</TableCell>

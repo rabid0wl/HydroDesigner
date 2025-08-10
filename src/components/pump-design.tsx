@@ -5,14 +5,48 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from "recharts";
+import type { Units } from "@/app/page";
 
-const chartData = [
+interface PumpDesignProps {
+  units: Units;
+}
+
+const metricChartData = [
   { name: 'Pump A', efficiency: 85, head: 55, 'power': 15.2 },
   { name: 'Pump B', efficiency: 82, head: 60, 'power': 16.5 },
   { name: 'Pump C', efficiency: 88, head: 52, 'power': 14.8 },
 ];
 
-export function PumpDesign() {
+const usChartData = [
+  { name: 'Pump A', efficiency: 85, head: 180, 'power': 20.4 },
+  { name: 'Pump B', efficiency: 82, head: 197, 'power': 22.1 },
+  { name: 'Pump C', efficiency: 88, head: 171, 'power': 19.8 },
+];
+
+export function PumpDesign({ units }: PumpDesignProps) {
+  const isMetric = units === 'metric';
+
+  const flowUnit = isMetric ? 'm³/h' : 'gpm';
+  const headUnit = isMetric ? 'm' : 'ft';
+  const tempUnit = isMetric ? '°C' : '°F';
+  const powerUnit = isMetric ? 'kW' : 'hp';
+  
+  const chartData = isMetric ? metricChartData : usChartData;
+  const selectedPump = isMetric ? {
+    name: 'Pump C',
+    efficiency: '88%',
+    head: '52m',
+    power: '14.8 kW',
+    npshr: '4.5 m'
+  } : {
+    name: 'Pump C',
+    efficiency: '88%',
+    head: '171 ft',
+    power: '19.8 hp',
+    npshr: '14.8 ft'
+  };
+
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
       <Card className="lg:col-span-1">
@@ -22,20 +56,20 @@ export function PumpDesign() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="design-flow">Design Flow Rate (m³/h)</Label>
-            <Input id="design-flow" placeholder="e.g., 150" type="number" />
+            <Label htmlFor="design-flow">Design Flow Rate ({flowUnit})</Label>
+            <Input id="design-flow" placeholder={isMetric ? "e.g., 150" : "e.g., 660"} type="number" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="total-head">Total Dynamic Head (m)</Label>
-            <Input id="total-head" placeholder="e.g., 50" type="number" />
+            <Label htmlFor="total-head">Total Dynamic Head ({headUnit})</Label>
+            <Input id="total-head" placeholder={isMetric ? "e.g., 50" : "e.g., 164"} type="number" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="fluid-type">Fluid Type</Label>
             <Input id="fluid-type" placeholder="e.g., Water" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="fluid-temp">Fluid Temperature (°C)</Label>
-            <Input id="fluid-temp" placeholder="e.g., 20" type="number" />
+            <Label htmlFor="fluid-temp">Fluid Temperature ({tempUnit})</Label>
+            <Input id="fluid-temp" placeholder={isMetric ? "e.g., 20" : "e.g., 68"} type="number" />
           </div>
           <Button className="w-full">Find Pumps</Button>
         </CardContent>
@@ -58,9 +92,14 @@ export function PumpDesign() {
                     backgroundColor: "hsl(var(--background))",
                     borderColor: "hsl(var(--border))",
                   }}
+                  formatter={(value, name) => {
+                    if (name === 'head') return [`${value} ${headUnit}`];
+                    if (name === 'efficiency') return [`${value}%`];
+                    return [value];
+                  }}
                 />
                 <Legend />
-                <Bar yAxisId="left" dataKey="head" fill="hsl(var(--primary))" name="Head (m)" />
+                <Bar yAxisId="left" dataKey="head" fill="hsl(var(--primary))" name={`Head (${headUnit})`} />
                 <Bar yAxisId="right" dataKey="efficiency" fill="hsl(var(--accent))" name="Efficiency (%)" />
               </BarChart>
             </ResponsiveContainer>
@@ -68,25 +107,25 @@ export function PumpDesign() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Selected Pump: Pump C</CardTitle>
+            <CardTitle>Selected Pump: {selectedPump.name}</CardTitle>
             <CardDescription>Detailed specifications and performance curve.</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
              <div className="bg-secondary p-4 rounded-lg">
               <Label className="text-sm text-muted-foreground">Best Efficiency Point</Label>
-              <p className="text-xl font-bold">88%</p>
+              <p className="text-xl font-bold">{selectedPump.efficiency}</p>
             </div>
              <div className="bg-secondary p-4 rounded-lg">
-              <Label className="text-sm text-muted-foreground">Operating Head (m)</Label>
-              <p className="text-xl font-bold">52m</p>
+              <Label className="text-sm text-muted-foreground">Operating Head ({headUnit})</Label>
+              <p className="text-xl font-bold">{selectedPump.head}</p>
             </div>
              <div className="bg-secondary p-4 rounded-lg">
-              <Label className="text-sm text-muted-foreground">Power Required</Label>
-              <p className="text-xl font-bold">14.8 kW</p>
+              <Label className="text-sm text-muted-foreground">Power Required ({powerUnit})</Label>
+              <p className="text-xl font-bold">{selectedPump.power}</p>
             </div>
              <div className="bg-secondary p-4 rounded-lg">
-              <Label className="text-sm text-muted-foreground">NPSHr</Label>
-              <p className="text-xl font-bold">4.5 m</p>
+              <Label className="text-sm text-muted-foreground">NPSHr ({headUnit})</Label>
+              <p className="text-xl font-bold">{selectedPump.npshr}</p>
             </div>
           </CardContent>
         </Card>

@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 
+export type Units = "metric" | "us";
 type View =
   | "dashboard"
   | "open-channel"
@@ -41,20 +42,20 @@ type View =
 
 export default function Home() {
   const [activeView, setActiveView] = React.useState<View>("dashboard");
-  const [units, setUnits] = React.useState<"metric" | "us">("metric");
+  const [units, setUnits] = React.useState<Units>("metric");
 
   const renderView = () => {
     switch (activeView) {
       case "dashboard":
         return <Dashboard />;
       case "open-channel":
-        return <OpenChannelDesign />;
+        return <OpenChannelDesign units={units} />;
       case "culvert-sizing":
-        return <CulvertSizing />;
+        return <CulvertSizing units={units} />;
       case "pipe-sizing":
-        return <PipeSizing />;
+        return <PipeSizing units={units} />;
       case "pump-design":
-        return <PumpDesign />;
+        return <PumpDesign units={units} />;
       case "ai-assistant":
         return <AiDesignAssistant />;
       default:

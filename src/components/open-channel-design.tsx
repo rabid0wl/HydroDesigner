@@ -350,7 +350,7 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
                 <CardDescription>Recommended final dimensions.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="flex justify-between items-baseline bg-secondary p-3 rounded-lg">
+                     <div className="flex justify-between items-baseline bg-secondary p-3 rounded-lg">
                         <Label className="text-sm text-muted-foreground">Design Freeboard ({lengthUnit})</Label>
                         <p className="text-xl font-bold">{results?.controllingFreeboard ?? '-'}</p>
                     </div>
@@ -475,10 +475,10 @@ const ChannelVisualization = ({ shape, bottomWidth, sideSlope, flowDepth, totalD
               
               {/* Flow Depth & Freeboard */}
               <line x1={xOffset + scaled.totalTopWidth + 15} y1={waterY} x2={xOffset + scaled.totalTopWidth + 15} y2={yOffset + scaled.totalDepth} stroke="hsl(var(--muted-foreground))" strokeWidth="0.5" strokeDasharray="2 2" />
-              <text x={xOffset + scaled.totalTopWidth + 20} y={waterY + scaled.flowDepth/2} textAnchor="start" dominantBaseline="middle" style={textStyle}>{`Flow: ${flowDepth.toFixed(2)}`}</text>
+              <text x={xOffset + scaled.totalTopWidth + 20} y={waterY + scaled.flowDepth/2} transform={`rotate(-90, ${xOffset + scaled.totalTopWidth + 20}, ${waterY + scaled.flowDepth/2})`} textAnchor="middle" dominantBaseline="middle" style={textStyle}>{`Flow: ${flowDepth.toFixed(2)}`}</text>
 
               <line x1={xOffset + scaled.totalTopWidth + 15} y1={yOffset} x2={xOffset + scaled.totalTopWidth + 15} y2={waterY} stroke="hsl(var(--muted-foreground))" strokeWidth="0.5" strokeDasharray="2 2" />
-              <text x={xOffset + scaled.totalTopWidth + 20} y={yOffset + (scaled.totalDepth - scaled.flowDepth)/2} textAnchor="start" dominantBaseline="middle" style={textStyle}>{`Freeboard: ${freeboard.toFixed(2)}`}</text>
+              <text x={xOffset + scaled.totalTopWidth + 20} y={yOffset + (scaled.totalDepth - scaled.flowDepth)/2} transform={`rotate(-90, ${xOffset + scaled.totalTopWidth + 20}, ${yOffset + (scaled.totalDepth - scaled.flowDepth)/2})`} textAnchor="middle" dominantBaseline="middle" style={textStyle}>{`Freeboard: ${freeboard.toFixed(2)}`}</text>
               
               {/* Top Width */}
               <line x1={xOffset} y1={yOffset - 15} x2={xOffset + scaled.totalTopWidth} y2={yOffset - 15} stroke="hsl(var(--muted-foreground))" strokeWidth="0.5" strokeDasharray="2 2" />
@@ -491,5 +491,3 @@ const ChannelVisualization = ({ shape, bottomWidth, sideSlope, flowDepth, totalD
       </svg>
   );
 }
-
-    

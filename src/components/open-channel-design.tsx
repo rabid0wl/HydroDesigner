@@ -15,6 +15,8 @@ interface OpenChannelDesignProps {
 }
 
 type Shape = "rectangular" | "trapezoidal" | "triangular" | "circular";
+type LiningType = "canal-bank" | "hard-surface" | "earth-lining";
+
 
 interface Results {
   flowDepth: string;
@@ -33,6 +35,7 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
   const [channelShape, setChannelShape] = useState<Shape | "">("rectangular");
   const [bottomWidth, setBottomWidth] = useState("");
   const [sideSlope, setSideSlope] = useState("");
+  const [liningType, setLiningType] = useState<LiningType>("canal-bank");
 
 
   const [results, setResults] = useState<Results | null>(null);
@@ -43,6 +46,27 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
   const slopeUnit = isMetric ? 'm/m' : 'ft/ft';
   const lengthUnit = isMetric ? 'm' : 'ft';
   const velocityUnit = isMetric ? 'm/s' : 'ft/s';
+
+  const calculateFreeboardFromChart = (capacity: number) => {
+    // These are approximations of the curves from the provided chart.
+    // y = a * ln(x) + b, where y is freeboard and x is capacity
+    let a: number, b: number;
+    switch(liningType) {
+      case 'earth-lining': // Top curve
+        a = 0.6; b = 0;
+        break;
+      case 'hard-surface': // Bottom curve
+        a = 0.45; b = -0.5;
+        break;
+      case 'canal-bank': // Middle curve
+      default:
+        a = 0.5; b = -0.2;
+        break;
+    }
+    const freeboard = a * Math.log(capacity) + b;
+    return Math.max(freeboard, 0.5); // Minimum of 0.5ft from chart
+  };
+
 
   const calculateResults = () => {
     setError(null);
@@ -129,9 +153,16 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
     const Fr = v / Math.sqrt(g * D);
     const flowState = Fr < 1 ? "Subcritical" : Fr > 1 ? "Supercritical" : "Critical";
 
-    const freeboardDepth1 = final_y / 3;
-    const freeboardDepth2 = isMetric ? 0.1524 : 0.5;
-    const freeboard = Math.max(freeboardDepth1, freeboardDepth2);
+    let freeboard;
+    if (isMetric) {
+      const freeboardDepth1 = final_y / 3;
+      // Convert 0.5ft to meters for metric default
+      const freeboardDepth2 = 0.1524;
+      freeboard = Math.max(freeboardDepth1, freeboardDepth2);
+    } else {
+      // Use the chart-based calculation for US units
+      freeboard = calculateFreeboardFromChart(Q);
+    }
 
     const totalCalculatedDepth = final_y + freeboard;
     const finalTotalDepth = Math.ceil(totalCalculatedDepth);
@@ -188,6 +219,21 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
               </SelectContent>
             </Select>
           </div>
+           {!isMetric && (
+              <div className="space-y-2 animate-in fade-in">
+                <Label htmlFor="lining-type">Lining Type</Label>
+                <Select onValueChange={(value) => setLiningType(value as LiningType)} value={liningType}>
+                  <SelectTrigger id="lining-type">
+                    <SelectValue placeholder="Select lining type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="canal-bank">Canal Bank</SelectItem>
+                    <SelectItem value="hard-surface">Hard Surface / Membrane</SelectItem>
+                    <SelectItem value="earth-lining">Earth Lining</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           
           <div className="space-y-2">
               <Label htmlFor="bottom-width">Bottom Width ({lengthUnit})</Label>

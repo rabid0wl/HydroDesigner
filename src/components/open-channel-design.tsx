@@ -345,48 +345,26 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
             </Card>
 
             <Card>
-            <CardHeader>
-                <CardTitle>Freeboard Design</CardTitle>
-                <CardDescription>Required lining and bank heights.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="flex justify-between items-baseline bg-secondary p-3 rounded-lg">
-                    <Label className="text-sm text-muted-foreground">Lining Freeboard ({lengthUnit})</Label>
-                    <p className="text-xl font-bold">{results?.liningFreeboard ?? '-'}</p>
-                </div>
-                <div className="flex justify-between items-baseline bg-secondary p-3 rounded-lg">
-                    <Label className="text-sm text-muted-foreground">Bank Height ({lengthUnit})</Label>
-                    <p className="text-xl font-bold">{results?.bankFreeboard ?? '-'}</p>
-                </div>
-                <div className="flex justify-between items-baseline bg-primary/10 p-3 rounded-lg border border-primary/20">
-                    <Label className="text-sm text-muted-foreground">Design Freeboard ({lengthUnit})</Label>
-                    <p className="text-xl font-bold">{results?.controllingFreeboard ?? '-'}</p>
-                </div>
-            </CardContent>
+                <CardHeader>
+                <CardTitle>Final Channel Design</CardTitle>
+                <CardDescription>Recommended final dimensions.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex justify-between items-baseline bg-secondary p-3 rounded-lg">
+                        <Label className="text-sm text-muted-foreground">Design Freeboard ({lengthUnit})</Label>
+                        <p className="text-xl font-bold">{results?.controllingFreeboard ?? '-'}</p>
+                    </div>
+                    <div className="flex justify-between items-baseline bg-secondary p-3 rounded-lg">
+                        <Label className="text-sm text-muted-foreground">Total Channel Depth ({lengthUnit})</Label>
+                        <p className="text-xl font-bold">{results?.totalDepth ?? '-'}</p>
+                    </div>
+                     <div className="flex justify-between items-baseline bg-secondary p-3 rounded-lg">
+                        <Label className="text-sm text-muted-foreground">Top Width of Channel ({lengthUnit})</Label>
+                        <p className="text-xl font-bold">{results?.topWidth ?? '-'}</p>
+                    </div>
+                </CardContent>
             </Card>
         </div>
-
-
-        {results && (
-          <Card className="animate-in fade-in">
-            <CardHeader>
-              <CardTitle>Final Channel Design</CardTitle>
-              <CardDescription>Recommended final dimensions for construction.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-primary/10 p-6 rounded-lg border border-primary/20 text-center">
-                <Label className="text-sm text-muted-foreground">Total Channel Depth ({lengthUnit})</Label>
-                <p className="text-3xl font-bold">{results.totalDepth}</p>
-                <p className="text-xs text-muted-foreground">Flow Depth + Freeboard, rounded up</p>
-              </div>
-              <div className="bg-primary/10 p-6 rounded-lg border border-primary/20 text-center">
-                <Label className="text-sm text-muted-foreground">Top Width of Channel ({lengthUnit})</Label>
-                <p className="text-3xl font-bold">{results.topWidth}</p>
-                <p className="text-xs text-muted-foreground">At total channel depth</p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         <Card>
           <CardHeader>

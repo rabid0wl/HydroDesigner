@@ -42,7 +42,7 @@ type View =
 
 export default function Home() {
   const [activeView, setActiveView] = React.useState<View>("dashboard");
-  const [units, setUnits] = React.useState<Units>("metric");
+  const [units, setUnits] = React.useState<Units>("us");
 
   const renderView = () => {
     switch (activeView) {

@@ -48,8 +48,8 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
     const n = parseFloat(manningN);
     const b = parseFloat(bottomWidth);
 
-    if (isNaN(Q) || isNaN(S) || isNaN(n) || (channelShape === 'rectangular' && isNaN(b))) {
-      setError("Please fill in all required fields with valid numbers.");
+    if (isNaN(Q) || Q <= 0 || isNaN(S) || S <= 0 || isNaN(n) || n <= 0 || (channelShape === 'rectangular' && (isNaN(b) || b <= 0))) {
+      setError("Please fill in all required fields with valid, positive numbers.");
       return;
     }
     
@@ -58,29 +58,39 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
       return;
     }
 
-    // Manning's equation for a rectangular channel needs to be solved for 'y' (flow depth).
-    // This is a non-linear equation, so we use an iterative approach (Newton-Raphson or bisection).
-    // For simplicity here, we'll use a simple iterative solver.
-    let y = 0.5; // Initial guess for flow depth
-    let y_prev = 0;
+    const unitConversion = isMetric ? 1.0 : 1.49;
+
+    // Function f(y) = (K/n) * A * R^(2/3) * S^(1/2) - Q
+    // We want to find y such that f(y) = 0
+    const manningFunc = (y: number) => {
+      const A = b * y;
+      const P = b + 2 * y;
+      if (P === 0) return -Q; // Avoid division by zero
+      const R = A / P;
+      return (unitConversion / n) * A * Math.pow(R, 2/3) * Math.pow(S, 1/2) - Q;
+    };
+
+    // Bisection method to find the root 'y' (normal depth)
+    let y_low = 0.0001; // Lower bound for depth
+    let y_high = 50.0;  // Upper bound for depth (a reasonable large number)
+    let y_mid = 0;
     const tol = 1e-6; // Tolerance for convergence
     let iterations = 0;
     const maxIterations = 100;
 
-    const unitConversion = isMetric ? 1.0 : 1.49;
+    if (manningFunc(y_low) * manningFunc(y_high) >= 0) {
+        setError("Cannot find a solution in the expected range. Please check your input values, they may be physically unrealistic.");
+        return;
+    }
 
-    while (Math.abs(y - y_prev) > tol && iterations < maxIterations) {
-        y_prev = y;
-        const A = b * y;
-        const P = b + 2 * y;
-        const R = A / P;
-        const Q_calc = (unitConversion / n) * A * Math.pow(R, 2/3) * Math.pow(S, 1/2);
-        
-        // A simple correction logic
-        if (Q_calc < Q) {
-            y *= 1.01;
+    while ((y_high - y_low) / 2.0 > tol && iterations < maxIterations) {
+        y_mid = (y_low + y_high) / 2.0;
+        if (manningFunc(y_mid) === 0.0) {
+            break; // Found exact solution
+        } else if (manningFunc(y_low) * manningFunc(y_mid) < 0) {
+            y_high = y_mid;
         } else {
-            y *= 0.99;
+            y_low = y_mid;
         }
         iterations++;
     }
@@ -90,7 +100,7 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
       return;
     }
 
-    const final_y = y;
+    const final_y = (y_low + y_high) / 2.0;
     const final_A = b * final_y;
     const v = Q / final_A;
     const D = final_A / b; // Hydraulic depth for rectangular channel
@@ -111,7 +121,7 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
       <Card className="lg:col-span-1">
         <CardHeader>
           <CardTitle>Channel Parameters</CardTitle>
-          <CardDescription>Define the hydraulic and geometric properties of the channel.</CardDescription>
+          <CardDescription>Enter the hydraulic and geometric properties of the open channel.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">

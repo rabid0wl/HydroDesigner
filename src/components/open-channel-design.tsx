@@ -83,13 +83,9 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
   const calculateFreeboardsFromChart = (capacity: number) => {
     const liningType = getLiningTypeFromManning();
     
-    // Top curve: Height of Canal Bank Above W.S.
     const bankFreeboard = 0.49 * Math.pow(capacity, 0.28);
-
-    // Middle curve: Height of hard surface or buried membrane lining above W.S.
     const hardSurfaceFreeboard = 0.31 * Math.pow(capacity, 0.24);
     
-    // Bottom curve: Height of earth lining above W.S. (Piecewise function)
     let earthLiningFreeboard;
     if (capacity < 200) {
       earthLiningFreeboard = 0.5;
@@ -100,8 +96,8 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
     const liningFreeboard = liningType === 'earth-lining' ? earthLiningFreeboard : hardSurfaceFreeboard;
     
     return {
-      liningFreeboard: Math.max(liningFreeboard, 0.5), // Min 0.5ft safeguard
-      bankFreeboard: Math.max(bankFreeboard, 0.5), // Min 0.5ft safeguard
+      liningFreeboard: Math.max(liningFreeboard, 0.5), 
+      bankFreeboard: Math.max(bankFreeboard, 0.5),
     };
   };
 
@@ -114,13 +110,10 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
     const S = parseFloat(channelSlope);
     const n = manningN === 'custom' ? parseFloat(customManningN) : parseFloat(manningN);
     const b = parseFloat(bottomWidth);
-    const z = parseFloat(sideSlope);
+    const z = parseFloat(sideSlope) || 0;
 
-    const requiredInputs = [Q, S, n];
-     if (channelShape === 'rectangular' || channelShape === 'trapezoidal') {
-      requiredInputs.push(b);
-    }
-    if (channelShape === 'trapezoidal') {
+    const requiredInputs = [Q, S, n, b];
+     if (channelShape === 'trapezoidal') {
       requiredInputs.push(z);
     }
 
@@ -199,7 +192,7 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
         bankFreeboard: 0,
     };
     if (isMetric) {
-      const defaultFreeboard = 0.1524;
+      const defaultFreeboard = 0.1524; // 0.5ft in meters
       freeboardResult = {
           liningFreeboard: Math.max(final_y / 3, defaultFreeboard),
           bankFreeboard: Math.max(final_y / 3, defaultFreeboard),
@@ -210,7 +203,7 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
     
     const controllingFreeboard = Math.max(freeboardResult.liningFreeboard, freeboardResult.bankFreeboard);
     const totalCalculatedDepth = final_y + controllingFreeboard;
-    const finalTotalDepth = isMetric ? (Math.ceil(totalCalculatedDepth * 10) / 10) : (Math.ceil(totalCalculatedDepth * 2) / 2);
+    const finalTotalDepth = isMetric ? (Math.ceil(totalCalculatedDepth * 10) / 10) : (Math.ceil(totalCalculatedDepth));
     
     let finalTopWidth;
     if (channelShape === 'rectangular') {
@@ -397,101 +390,94 @@ interface ChannelVisualizationProps {
 }
 
 const ChannelVisualization = ({ shape, bottomWidth, sideSlope, flowDepth, totalDepth, units }: ChannelVisualizationProps) => {
-  if (!bottomWidth || !totalDepth) return null;
+  if (!bottomWidth || !totalDepth || !flowDepth) return null;
 
   const lengthUnit = units === 'metric' ? 'm' : 'ft';
+  const freeboard = totalDepth - flowDepth;
 
-  const viewBoxHeight = totalDepth * 1.2;
-  const viewBoxWidth = (bottomWidth + 2 * sideSlope * totalDepth) * 1.2;
-  const yOffset = viewBoxHeight * 0.1;
+  const totalTopWidth = bottomWidth + 2 * sideSlope * totalDepth;
+  const waterTopWidth = bottomWidth + 2 * sideSlope * flowDepth;
 
-  const totalDepthTopWidth = bottomWidth + 2 * sideSlope * totalDepth;
-  const flowDepthTopWidth = bottomWidth + 2 * sideSlope * flowDepth;
-  
-  const scaleFactor = 240 / viewBoxHeight; // 240 is the pixel height of the container
+  const maxViewWidth = totalTopWidth * 1.2;
+  const maxViewHeight = totalDepth * 1.2;
+
+  const containerHeight = 240; 
+  const scale = containerHeight / maxViewHeight;
+  const containerWidth = maxViewWidth * scale + 80; 
 
   const scaled = {
-    totalDepth: totalDepth * scaleFactor,
-    flowDepth: flowDepth * scaleFactor,
-    bottomWidth: bottomWidth * scaleFactor,
-    totalDepthTopWidth: totalDepthTopWidth * scaleFactor,
-    flowDepthTopWidth: flowDepthTopWidth * scaleFactor,
-    sideSlope: sideSlope,
+    totalDepth: totalDepth * scale,
+    flowDepth: flowDepth * scale,
+    bottomWidth: bottomWidth * scale,
+    totalTopWidth: totalTopWidth * scale,
+    waterTopWidth: waterTopWidth * scale,
+    sideSlopeOffset: sideSlope * totalDepth * scale,
+    waterSideSlopeOffset: sideSlope * flowDepth * scale,
   };
 
-  const containerWidth = scaled.totalDepthTopWidth + 40;
-  const containerHeight = scaled.totalDepth + 20;
+  const channelPath = `
+    M 0,0 
+    L ${scaled.sideSlopeOffset},${scaled.totalDepth} 
+    L ${scaled.sideSlopeOffset + scaled.bottomWidth},${scaled.totalDepth} 
+    L ${scaled.totalTopWidth},0 Z
+  `;
 
-  const channelPath = shape === 'rectangular' ? `
-    M 0,${scaled.totalDepth}
-    L 0,0
-    L ${scaled.bottomWidth},0
-    L ${scaled.bottomWidth},${scaled.totalDepth}` 
-    : 
-    `M 0,${scaled.totalDepth}
-    L ${sideSlope * scaled.totalDepth},0
-    L ${sideSlope * scaled.totalDepth + scaled.bottomWidth},0
-    L ${scaled.totalDepthTopWidth},${scaled.totalDepth}`
-  ;
+  const waterPath = `
+    M ${scaled.sideSlopeOffset - scaled.waterSideSlopeOffset}, ${scaled.totalDepth - scaled.flowDepth}
+    L ${scaled.sideSlopeOffset},${scaled.totalDepth}
+    L ${scaled.sideSlopeOffset + scaled.bottomWidth},${scaled.totalDepth}
+    L ${scaled.sideSlopeOffset + scaled.bottomWidth + scaled.waterSideSlopeOffset},${scaled.totalDepth - scaled.flowDepth} Z
+  `;
   
-  const waterPath = shape === 'rectangular' ? `
-    M 0,${scaled.totalDepth}
-    L 0,${scaled.totalDepth - scaled.flowDepth}
-    L ${scaled.bottomWidth},${scaled.totalDepth - scaled.flowDepth}
-    L ${scaled.bottomWidth},${scaled.totalDepth}`
-    :
-    `M ${sideSlope * (scaled.totalDepth - scaled.flowDepth)}, ${scaled.totalDepth}
-     L ${sideSlope * scaled.totalDepth}, 0
-     L ${sideSlope * scaled.totalDepth + scaled.bottomWidth}, 0
-     L ${sideSlope * scaled.totalDepth + scaled.bottomWidth + sideSlope * scaled.flowDepth}, ${scaled.totalDepth - scaled.flowDepth}
-     L ${sideSlope * (scaled.totalDepth - scaled.flowDepth)}, ${scaled.totalDepth - scaled.flowDepth}`
-    ;
-
-   const freeboard = totalDepth - flowDepth;
+  const textStyle = { fontSize: '10px', fill: 'hsl(var(--muted-foreground))' };
 
   return (
-    <div className="w-full h-full relative" style={{ minWidth: containerWidth, minHeight: containerHeight }}>
+    <div className="w-full h-full flex items-center justify-center">
         <svg
-            viewBox={`0 0 ${containerWidth} ${containerHeight}`}
+            viewBox={`0 0 ${containerWidth} ${containerHeight + 40}`}
             preserveAspectRatio="xMidYMid meet"
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-            style={{ width: containerWidth, height: containerHeight }}
+            className="w-full h-full"
         >
+          <g transform={`translate(${containerWidth/2 - scaled.totalTopWidth/2}, 10)`}>
             {/* Channel Shape */}
-            <path d={channelPath} stroke="hsl(var(--muted-foreground))" strokeWidth="2" fill="hsl(var(--background))" transform={`translate(20, 10)`} />
+            <path d={channelPath} stroke="hsl(var(--muted-foreground))" strokeWidth="2" fill="hsl(var(--background))" transform={`translate(0, ${containerHeight - scaled.totalDepth}) rotate(180, ${scaled.totalTopWidth/2}, ${scaled.totalDepth/2})`} />
 
             {/* Water */}
             <path
-                d={`M ${sideSlope * freeboard},${scaled.flowDepth} 
-                    L ${scaled.totalDepthTopWidth - sideSlope * freeboard},${scaled.flowDepth} 
-                    L ${scaled.totalDepthTopWidth},${scaled.totalDepth}
-                    L 0,${scaled.totalDepth} Z`}
+                d={waterPath}
                 fill="hsl(var(--primary)/0.3)"
                 stroke="hsl(var(--primary))"
                 strokeWidth="1"
-                transform={`translate(20, ${scaled.totalDepth - scaled.flowDepth + 10})`}
+                transform={`translate(0, ${containerHeight - scaled.totalDepth}) rotate(180, ${scaled.totalTopWidth/2}, ${scaled.totalDepth/2})`}
             />
 
             {/* Dimensions */}
-            {/* Total Depth */}
-            <line x1="5" y1="10" x2="5" y2={scaled.totalDepth + 10} stroke="hsl(var(--muted-foreground))" strokeWidth="1" strokeDasharray="2 2" />
-            <line x1="0" y1={10} x2="10" y2={10} stroke="hsl(var(--muted-foreground))" strokeWidth="1" />
-            <line x1="0" y1={scaled.totalDepth + 10} x2="10" y2={scaled.totalDepth + 10} stroke="hsl(var(--muted-foreground))" strokeWidth="1" />
-            <text x="0" y={scaled.totalDepth/2 + 10} transform={`rotate(-90, 0, ${scaled.totalDepth/2 + 10})`} textAnchor="middle" fontSize="10" fill="hsl(var(--muted-foreground))" dy="-4">{`${totalDepth.toFixed(2)} ${lengthUnit}`}</text>
+            <g transform={`translate(0, ${containerHeight - scaled.totalDepth})`}>
+                {/* Total Depth */}
+                <line x1="-10" y1="0" x2="-10" y2={scaled.totalDepth} stroke="hsl(var(--muted-foreground))" strokeWidth="1" strokeDasharray="2 2" />
+                <line x1="-15" y1="0" x2="-5" y2="0" stroke="hsl(var(--muted-foreground))" strokeWidth="1" />
+                <line x1="-15" y1={scaled.totalDepth} x2="-5" y2={scaled.totalDepth} stroke="hsl(var(--muted-foreground))" strokeWidth="1" />
+                <text x="-20" y={scaled.totalDepth/2} transform={`rotate(-90, -20, ${scaled.totalDepth/2})`} textAnchor="middle" style={textStyle}>{`${totalDepth.toFixed(2)} ${lengthUnit}`}</text>
+                
+                {/* Flow Depth */}
+                <line x1={scaled.totalTopWidth + 10} y1={scaled.totalDepth - scaled.flowDepth} x2={scaled.totalTopWidth + 10} y2={scaled.totalDepth} stroke="hsl(var(--muted-foreground))" strokeWidth="1" strokeDasharray="2 2" />
+                <line x1={scaled.totalTopWidth + 5} y1={scaled.totalDepth - scaled.flowDepth} x2={scaled.totalTopWidth + 15} y2={scaled.totalDepth - scaled.flowDepth} stroke="hsl(var(--muted-foreground))" strokeWidth="1" />
+                <line x1={scaled.totalTopWidth + 5} y1={scaled.totalDepth} x2={scaled.totalTopWidth + 15} y2={scaled.totalDepth} stroke="hsl(var(--muted-foreground))" strokeWidth="1" />
+                <text x={scaled.totalTopWidth + 20} y={scaled.totalDepth - scaled.flowDepth/2} textAnchor="start" dominantBaseline="middle" style={textStyle}>{`Flow: ${flowDepth.toFixed(2)}`}</text>
 
-            {/* Flow Depth */}
-            <line x1={scaled.totalDepthTopWidth+35} y1={scaled.totalDepth - scaled.flowDepth + 10} x2={scaled.totalDepthTopWidth+35} y2={scaled.totalDepth+10} stroke="hsl(var(--muted-foreground))" strokeWidth="1" strokeDasharray="2 2" />
-            <line x1={scaled.totalDepthTopWidth+30} y1={scaled.totalDepth - scaled.flowDepth + 10} x2={scaled.totalDepthTopWidth+40} y2={scaled.totalDepth - scaled.flowDepth + 10} stroke="hsl(var(--muted-foreground))" strokeWidth="1" />
-            <line x1={scaled.totalDepthTopWidth+30} y1={scaled.totalDepth+10} x2={scaled.totalDepthTopWidth+40} y2={scaled.totalDepth+10} stroke="hsl(var(--muted-foreground))" strokeWidth="1" />
-            <text x={scaled.totalDepthTopWidth+40} y={scaled.totalDepth - scaled.flowDepth/2 + 10} textAnchor="start" fontSize="10" fill="hsl(var(--muted-foreground))" dy="4">{`Flow: ${flowDepth.toFixed(2)} ${lengthUnit}`}</text>
+                {/* Freeboard */}
+                <line x1={scaled.totalTopWidth + 10} y1="0" x2={scaled.totalTopWidth + 10} y2={scaled.totalDepth - scaled.flowDepth} stroke="hsl(var(--muted-foreground))" strokeWidth="1" strokeDasharray="2 2" />
+                <text x={scaled.totalTopWidth + 20} y={(scaled.totalDepth - scaled.flowDepth)/2} textAnchor="start" dominantBaseline="middle" style={textStyle}>{`Freeboard: ${freeboard.toFixed(2)}`}</text>
 
-             {/* Freeboard */}
-             <text x={scaled.totalDepthTopWidth+40} y={scaled.totalDepth - scaled.flowDepth - freeboard*scaleFactor/2 + 10} textAnchor="start" fontSize="10" fill="hsl(var(--muted-foreground))" dy="4">{`Freeboard: ${freeboard.toFixed(2)} ${lengthUnit}`}</text>
+                {/* Bottom Width */}
+                <line x1={scaled.sideSlopeOffset} y1={scaled.totalDepth + 10} x2={scaled.sideSlopeOffset + scaled.bottomWidth} y2={scaled.totalDepth + 10} stroke="hsl(var(--muted-foreground))" strokeWidth="1" strokeDasharray="2 2" />
+                <text x={scaled.sideSlopeOffset + scaled.bottomWidth / 2} y={scaled.totalDepth + 20} textAnchor="middle" style={textStyle}>{`${bottomWidth.toFixed(2)}`}</text>
 
-
-            {/* Bottom Width */}
-            <line x1={sideSlope*totalDepth*scaleFactor+20} y1={scaled.totalDepth+15} x2={sideSlope*totalDepth*scaleFactor+scaled.bottomWidth+20} y2={scaled.totalDepth+15} stroke="hsl(var(--muted-foreground))" strokeWidth="1" strokeDasharray="2 2" />
-            <text x={sideSlope*totalDepth*scaleFactor+scaled.bottomWidth/2+20} y={scaled.totalDepth+25} textAnchor="middle" fontSize="10" fill="hsl(var(--muted-foreground))">{`${bottomWidth.toFixed(2)} ${lengthUnit}`}</text>
+                {/* Top Width */}
+                <line x1="0" y1="-10" x2={scaled.totalTopWidth} y2="-10" stroke="hsl(var(--muted-foreground))" strokeWidth="1" strokeDasharray="2 2" />
+                 <text x={scaled.totalTopWidth / 2} y="-20" textAnchor="middle" style={textStyle}>{`Top Width: ${totalTopWidth.toFixed(2)} ${lengthUnit}`}</text>
+            </g>
+          </g>
         </svg>
     </div>
   )

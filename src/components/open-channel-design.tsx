@@ -245,75 +245,74 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-      <div className="lg:col-span-1 space-y-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Channel Design</CardTitle>
-            <CardDescription>Enter the properties of the channel and flow to calculate the design parameters.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="flow-rate">Flow Rate ({flowUnit})</Label>
-              <Input id="flow-rate" placeholder={isMetric ? "e.g., 10.5" : "e.g., 370"} type="number" value={flowRate} onChange={(e) => setFlowRate(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="channel-slope">Channel Slope ({slopeUnit})</Label>
-              <Input id="channel-slope" placeholder="e.g., 0.005" type="number" value={channelSlope} onChange={(e) => setChannelSlope(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="manning-material">Channel Material (Manning's n)</Label>
-              <Select onValueChange={handleManningSelect} value={manningN}>
-                <SelectTrigger id="manning-material">
-                  <SelectValue placeholder="Select material" />
-                </SelectTrigger>
-                <SelectContent>
-                  {manningData.map(m => (
-                      <SelectItem key={m.label} value={m.value}>
-                          {m.label} ({m.value !== 'custom' && `n=${m.value}`})
-                      </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+      <Card className="lg:col-span-1">
+        <CardHeader>
+          <CardTitle>Channel Design</CardTitle>
+          <CardDescription>Enter the properties of the channel and flow to calculate the design parameters.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="flow-rate">Flow Rate ({flowUnit})</Label>
+            <Input id="flow-rate" placeholder={isMetric ? "e.g., 10.5" : "e.g., 370"} type="number" value={flowRate} onChange={(e) => setFlowRate(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="channel-slope">Channel Slope ({slopeUnit})</Label>
+            <Input id="channel-slope" placeholder="e.g., 0.005" type="number" value={channelSlope} onChange={(e) => setChannelSlope(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="manning-material">Channel Material (Manning's n)</Label>
+            <Select onValueChange={handleManningSelect} value={manningN}>
+              <SelectTrigger id="manning-material">
+                <SelectValue placeholder="Select material" />
+              </SelectTrigger>
+              <SelectContent>
+                {manningData.map(m => (
+                    <SelectItem key={m.label} value={m.value}>
+                        {m.label} ({m.value !== 'custom' && `n=${m.value}`})
+                    </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-            {manningN === 'custom' && (
-              <div className="space-y-2 animate-in fade-in">
-                <Label htmlFor="manning-n">Custom Manning's Roughness (n)</Label>
-                <Input id="manning-n" placeholder="Enter custom 'n' value" type="number" value={customManningN} onChange={(e) => setCustomManningN(e.target.value)} />
-              </div>
-            )}
-            
-            <div className="space-y-2">
-              <Label htmlFor="channel-shape">Channel Shape</Label>
-              <Select onValueChange={(value) => setChannelShape(value as Shape)} value={channelShape}>
-                <SelectTrigger id="channel-shape">
-                  <SelectValue placeholder="Select shape" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="rectangular">Rectangular</SelectItem>
-                  <SelectItem value="trapezoidal">Trapezoidal</SelectItem>
-                  <SelectItem value="triangular" disabled>Triangular (coming soon)</SelectItem>
-                  <SelectItem value="circular" disabled>Circular (coming soon)</SelectItem>
-                </SelectContent>
-              </Select>
+          {manningN === 'custom' && (
+            <div className="space-y-2 animate-in fade-in">
+              <Label htmlFor="manning-n">Custom Manning's Roughness (n)</Label>
+              <Input id="manning-n" placeholder="Enter custom 'n' value" type="number" value={customManningN} onChange={(e) => setCustomManningN(e.target.value)} />
             </div>
-            
-            <div className="space-y-2">
-                <Label htmlFor="bottom-width">Bottom Width ({lengthUnit})</Label>
-                <Input id="bottom-width" placeholder={isMetric ? "e.g., 5" : "e.g., 16"} type="number" value={bottomWidth} onChange={(e) => setBottomWidth(e.target.value)} />
+          )}
+          
+          <div className="space-y-2">
+            <Label htmlFor="channel-shape">Channel Shape</Label>
+            <Select onValueChange={(value) => setChannelShape(value as Shape)} value={channelShape}>
+              <SelectTrigger id="channel-shape">
+                <SelectValue placeholder="Select shape" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="rectangular">Rectangular</SelectItem>
+                <SelectItem value="trapezoidal">Trapezoidal</SelectItem>
+                <SelectItem value="triangular" disabled>Triangular (coming soon)</SelectItem>
+                <SelectItem value="circular" disabled>Circular (coming soon)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+              <Label htmlFor="bottom-width">Bottom Width ({lengthUnit})</Label>
+              <Input id="bottom-width" placeholder={isMetric ? "e.g., 5" : "e.g., 16"} type="number" value={bottomWidth} onChange={(e) => setBottomWidth(e.target.value)} />
+          </div>
+
+          {channelShape === 'trapezoidal' && (
+            <div className="space-y-2 animate-in fade-in">
+              <Label htmlFor="side-slope">Side Slope (H:1V)</Label>
+              <Input id="side-slope" placeholder="e.g., 2" type="number" value={sideSlope} onChange={(e) => setSideSlope(e.target.value)} />
             </div>
+          )}
 
-            {channelShape === 'trapezoidal' && (
-              <div className="space-y-2 animate-in fade-in">
-                <Label htmlFor="side-slope">Side Slope (H:1V)</Label>
-                <Input id="side-slope" placeholder="e.g., 2" type="number" value={sideSlope} onChange={(e) => setSideSlope(e.target.value)} />
-              </div>
-            )}
+          <Button className="w-full" onClick={calculateResults}>Calculate</Button>
+        </CardContent>
+      </Card>
 
-            <Button className="w-full" onClick={calculateResults}>Calculate</Button>
-          </CardContent>
-        </Card>
-      </div>
       <div className="lg:col-span-2 space-y-8">
         {error && (
           <Alert variant="destructive">
@@ -322,51 +321,65 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
-        <Card>
-          <CardHeader>
-            <CardTitle>Hydraulic Results</CardTitle>
-            <CardDescription>Calculated flow characteristics.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid grid-cols-2 md:grid-cols-2 gap-6">
-            <div className="bg-secondary p-6 rounded-lg">
-              <Label className="text-sm text-muted-foreground">Normal Flow Depth ({lengthUnit})</Label>
-              <p className="text-3xl font-bold">{results?.flowDepth ?? '-'}</p>
-            </div>
-            <div className="bg-secondary p-6 rounded-lg">
-              <Label className="text-sm text-muted-foreground">Flow Velocity ({velocityUnit})</Label>
-              <p className="text-3xl font-bold">{results?.flowVelocity ?? '-'}</p>
-            </div>
-            <div className="bg-secondary p-6 rounded-lg">
-              <Label className="text-sm text-muted-foreground">Froude Number</Label>
-              <p className="text-3xl font-bold">{results ? `${results.froudeNumber} (${results.flowState})` : '-'}</p>
-            </div>
-             <div className="bg-secondary p-6 rounded-lg">
-                <Label className="text-sm text-muted-foreground">Freeboard Requirements ({lengthUnit})</Label>
-                <div className="text-lg font-bold mt-1">
-                    <p>Lining: {results?.liningFreeboard ?? '-'}</p>
-                    <p>Bank: {results?.bankFreeboard ?? '-'}</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <Card>
+            <CardHeader>
+                <CardTitle>Hydraulic Results</CardTitle>
+                <CardDescription>Calculated flow characteristics.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="flex justify-between items-baseline bg-secondary p-3 rounded-lg">
+                    <Label className="text-sm text-muted-foreground">Normal Flow Depth ({lengthUnit})</Label>
+                    <p className="text-xl font-bold">{results?.flowDepth ?? '-'}</p>
                 </div>
-            </div>
-          </CardContent>
-        </Card>
+                <div className="flex justify-between items-baseline bg-secondary p-3 rounded-lg">
+                    <Label className="text-sm text-muted-foreground">Flow Velocity ({velocityUnit})</Label>
+                    <p className="text-xl font-bold">{results?.flowVelocity ?? '-'}</p>
+                </div>
+                <div className="flex justify-between items-baseline bg-secondary p-3 rounded-lg">
+                    <Label className="text-sm text-muted-foreground">Froude Number</Label>
+                    <p className="text-xl font-bold">{results ? `${results.froudeNumber} (${results.flowState})` : '-'}</p>
+                </div>
+            </CardContent>
+            </Card>
+
+            <Card>
+            <CardHeader>
+                <CardTitle>Freeboard Design</CardTitle>
+                <CardDescription>Required lining and bank heights.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="flex justify-between items-baseline bg-secondary p-3 rounded-lg">
+                    <Label className="text-sm text-muted-foreground">Lining Freeboard ({lengthUnit})</Label>
+                    <p className="text-xl font-bold">{results?.liningFreeboard ?? '-'}</p>
+                </div>
+                <div className="flex justify-between items-baseline bg-secondary p-3 rounded-lg">
+                    <Label className="text-sm text-muted-foreground">Bank Height ({lengthUnit})</Label>
+                    <p className="text-xl font-bold">{results?.bankFreeboard ?? '-'}</p>
+                </div>
+                <div className="flex justify-between items-baseline bg-primary/10 p-3 rounded-lg border border-primary/20">
+                    <Label className="text-sm text-muted-foreground">Design Freeboard ({lengthUnit})</Label>
+                    <p className="text-xl font-bold">{results?.controllingFreeboard ?? '-'}</p>
+                </div>
+            </CardContent>
+            </Card>
+        </div>
+
+
         {results && (
           <Card className="animate-in fade-in">
             <CardHeader>
               <CardTitle>Final Channel Design</CardTitle>
               <CardDescription>Recommended final dimensions for construction.</CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-primary/10 p-6 rounded-lg border border-primary/20">
-                <Label className="text-sm text-muted-foreground">Design Freeboard ({lengthUnit})</Label>
-                <p className="text-3xl font-bold">{results.controllingFreeboard}</p>
-                <p className="text-xs text-muted-foreground">Controlling freeboard value</p>
-              </div>
-              <div className="bg-primary/10 p-6 rounded-lg border border-primary/20">
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-primary/10 p-6 rounded-lg border border-primary/20 text-center">
                 <Label className="text-sm text-muted-foreground">Total Channel Depth ({lengthUnit})</Label>
                 <p className="text-3xl font-bold">{results.totalDepth}</p>
                 <p className="text-xs text-muted-foreground">Flow Depth + Freeboard, rounded up</p>
               </div>
-              <div className="bg-primary/10 p-6 rounded-lg border border-primary/20">
+              <div className="bg-primary/10 p-6 rounded-lg border border-primary/20 text-center">
                 <Label className="text-sm text-muted-foreground">Top Width of Channel ({lengthUnit})</Label>
                 <p className="text-3xl font-bold">{results.topWidth}</p>
                 <p className="text-xs text-muted-foreground">At total channel depth</p>
@@ -374,6 +387,7 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
             </CardContent>
           </Card>
         )}
+
         <Card>
           <CardHeader>
             <CardTitle>Channel Visualization</CardTitle>
@@ -499,3 +513,5 @@ const ChannelVisualization = ({ shape, bottomWidth, sideSlope, flowDepth, totalD
       </svg>
   );
 }
+
+    

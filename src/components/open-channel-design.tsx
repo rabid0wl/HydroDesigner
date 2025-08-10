@@ -371,7 +371,7 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
             <CardTitle>Channel Visualization</CardTitle>
             <CardDescription>A cross-section of the designed channel.</CardDescription>
           </CardHeader>
-          <CardContent className="bg-muted min-h-[450px] rounded-lg p-4">
+          <CardContent className="bg-muted min-h-[450px] rounded-lg p-4 flex items-start">
              {results && channelShape ? (
               <ChannelVisualization
                 shape={channelShape as 'rectangular' | 'trapezoidal'}
@@ -382,7 +382,7 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
                 units={units}
               />
             ) : (
-                <div className="flex items-center justify-center h-full">
+                <div className="flex items-center justify-center h-full w-full">
                   <p className="text-muted-foreground">Enter parameters and calculate to see visualization</p>
                 </div>
             )}
@@ -411,9 +411,9 @@ const ChannelVisualization = ({ shape, bottomWidth, sideSlope, flowDepth, totalD
 
   const totalTopWidth = shape === 'rectangular' ? bottomWidth : bottomWidth + 2 * sideSlope * totalDepth;
   
-  const viewPadding = 50;
+  const viewPadding = 60;
   const containerWidth = 600; 
-  const containerHeight = 400;
+  const containerHeight = 450;
 
   let scale;
   if (totalTopWidth / totalDepth > (containerWidth - viewPadding*2) / (containerHeight - viewPadding*2)) {
@@ -430,7 +430,7 @@ const ChannelVisualization = ({ shape, bottomWidth, sideSlope, flowDepth, totalD
   };
 
   const xOffset = (containerWidth - scaled.totalTopWidth) / 2;
-  const yOffset = (containerHeight - scaled.totalDepth) / 2;
+  const yOffset = viewPadding;
 
   const totalDepthSideSlopeOffset = shape === 'rectangular' ? 0 : sideSlope * totalDepth * scale;
   

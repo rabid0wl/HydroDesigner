@@ -35,7 +35,7 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
   const [channelShape, setChannelShape] = useState<Shape | "">("rectangular");
   const [bottomWidth, setBottomWidth] = useState("");
   const [sideSlope, setSideSlope] = useState("");
-  const [liningType, setLiningType] = useState<LiningType>("canal-bank");
+  const [liningType, setLiningType] = useState<LiningType>("earth-lining");
 
 
   const [results, setResults] = useState<Results | null>(null);
@@ -227,9 +227,9 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
                     <SelectValue placeholder="Select lining type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="canal-bank">Canal Bank</SelectItem>
-                    <SelectItem value="hard-surface">Hard Surface / Membrane</SelectItem>
-                    <SelectItem value="earth-lining">Earth Lining</SelectItem>
+                    <SelectItem value="earth-lining">Earth Lining (Unimproved)</SelectItem>
+                    <SelectItem value="canal-bank">Canal Bank (Improved)</SelectItem>
+                    <SelectItem value="hard-surface">Hard Surface / Concrete</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

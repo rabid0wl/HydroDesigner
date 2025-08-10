@@ -22,14 +22,18 @@ interface Results {
   froudeNumber: string;
   flowState: string;
   freeboard: string;
+  totalDepth: string;
+  topWidth: string;
 }
 
 export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
   const [flowRate, setFlowRate] = useState("");
   const [channelSlope, setChannelSlope] = useState("");
   const [manningN, setManningN] = useState("");
-  const [channelShape, setChannelShape] = useState<Shape | "">("");
+  const [channelShape, setChannelShape] = useState<Shape | "">("rectangular");
   const [bottomWidth, setBottomWidth] = useState("");
+  const [sideSlope, setSideSlope] = useState("");
+
 
   const [results, setResults] = useState<Results | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -48,34 +52,43 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
     const S = parseFloat(channelSlope);
     const n = parseFloat(manningN);
     const b = parseFloat(bottomWidth);
+    const z = parseFloat(sideSlope);
 
-    if (isNaN(Q) || Q <= 0 || isNaN(S) || S <= 0 || isNaN(n) || n <= 0 || (channelShape === 'rectangular' && (isNaN(b) || b <= 0))) {
+    const requiredInputs = [Q, S, n, b];
+    if (channelShape === 'trapezoidal') {
+      requiredInputs.push(z);
+    }
+
+    if (requiredInputs.some(val => isNaN(val) || val <= 0)) {
       setError("Please fill in all required fields with valid, positive numbers.");
       return;
     }
     
-    if (channelShape !== 'rectangular') {
-      setError("Only rectangular channel calculations are implemented at this time.");
+    if (channelShape !== 'rectangular' && channelShape !== 'trapezoidal') {
+      setError("Only rectangular and trapezoidal channel calculations are implemented at this time.");
       return;
     }
 
     const unitConversion = isMetric ? 1.0 : 1.49;
 
-    // Function f(y) = (K/n) * A * R^(2/3) * S^(1/2) - Q
-    // We want to find y such that f(y) = 0
     const manningFunc = (y: number) => {
-      const A = b * y;
-      const P = b + 2 * y;
-      if (P === 0) return -Q; // Avoid division by zero
+      let A, P;
+      if (channelShape === 'rectangular') {
+        A = b * y;
+        P = b + 2 * y;
+      } else { // Trapezoidal
+        A = (b + z * y) * y;
+        P = b + 2 * y * Math.sqrt(1 + z * z);
+      }
+      if (P === 0) return -Q;
       const R = A / P;
       return (unitConversion / n) * A * Math.pow(R, 2/3) * Math.pow(S, 1/2) - Q;
     };
 
-    // Bisection method to find the root 'y' (normal depth)
-    let y_low = 0.0001; // Lower bound for depth
-    let y_high = 50.0;  // Upper bound for depth (a reasonable large number)
+    let y_low = 0.0001;
+    let y_high = 50.0;
     let y_mid = 0;
-    const tol = 1e-6; // Tolerance for convergence
+    const tol = 1e-6;
     let iterations = 0;
     const maxIterations = 100;
 
@@ -86,9 +99,8 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
 
     while ((y_high - y_low) / 2.0 > tol && iterations < maxIterations) {
         y_mid = (y_low + y_high) / 2.0;
-        if (manningFunc(y_mid) === 0.0) {
-            break; // Found exact solution
-        } else if (manningFunc(y_low) * manningFunc(y_mid) < 0) {
+        if (manningFunc(y_mid) === 0.0) break;
+        if (manningFunc(y_low) * manningFunc(y_mid) < 0) {
             y_high = y_mid;
         } else {
             y_low = y_mid;
@@ -102,16 +114,34 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
     }
 
     const final_y = (y_low + y_high) / 2.0;
-    const final_A = b * final_y;
+    let final_A, T;
+    if (channelShape === 'rectangular') {
+      final_A = b * final_y;
+      T = b;
+    } else { // Trapezoidal
+      final_A = (b + z * final_y) * final_y;
+      T = b + 2 * z * final_y;
+    }
+
     const v = Q / final_A;
-    const D = final_A / b; // Hydraulic depth for rectangular channel
+    const D = final_A / T; // Hydraulic depth
     const g = isMetric ? 9.81 : 32.2;
     const Fr = v / Math.sqrt(g * D);
     const flowState = Fr < 1 ? "Subcritical" : Fr > 1 ? "Supercritical" : "Critical";
 
     const freeboardDepth1 = final_y / 3;
-    const freeboardDepth2 = isMetric ? 0.1524 : 0.5; // 0.5 ft or its metric equivalent
+    const freeboardDepth2 = isMetric ? 0.1524 : 0.5;
     const freeboard = Math.max(freeboardDepth1, freeboardDepth2);
+
+    const totalCalculatedDepth = final_y + freeboard;
+    const finalTotalDepth = Math.ceil(totalCalculatedDepth);
+    
+    let finalTopWidth;
+    if (channelShape === 'rectangular') {
+      finalTopWidth = b;
+    } else { // Trapezoidal
+      finalTopWidth = b + 2 * z * finalTotalDepth;
+    }
 
     setResults({
       flowDepth: final_y.toFixed(2),
@@ -119,6 +149,8 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
       froudeNumber: Fr.toFixed(2),
       flowState: flowState,
       freeboard: freeboard.toFixed(2),
+      totalDepth: finalTotalDepth.toFixed(2),
+      topWidth: finalTopWidth.toFixed(2),
     });
   };
 
@@ -127,7 +159,7 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
       <Card className="lg:col-span-1">
         <CardHeader>
           <CardTitle>Channel Parameters</CardTitle>
-          <CardDescription>Enter the hydraulic and geometric properties of the open channel to calculate flow characteristics.</CardDescription>
+          <CardDescription>Enter the hydraulic and geometric properties of the open channel.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
@@ -150,18 +182,25 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="rectangular">Rectangular</SelectItem>
-                <SelectItem value="trapezoidal" disabled>Trapezoidal (coming soon)</SelectItem>
+                <SelectItem value="trapezoidal">Trapezoidal</SelectItem>
                 <SelectItem value="triangular" disabled>Triangular (coming soon)</SelectItem>
                 <SelectItem value="circular" disabled>Circular (coming soon)</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          {channelShape === 'rectangular' && (
-            <div className="space-y-2 animate-in fade-in">
+          
+          <div className="space-y-2">
               <Label htmlFor="bottom-width">Bottom Width ({lengthUnit})</Label>
               <Input id="bottom-width" placeholder={isMetric ? "e.g., 5" : "e.g., 16"} type="number" value={bottomWidth} onChange={(e) => setBottomWidth(e.target.value)} />
+          </div>
+
+          {channelShape === 'trapezoidal' && (
+            <div className="space-y-2 animate-in fade-in">
+              <Label htmlFor="side-slope">Side Slope (H:1V)</Label>
+              <Input id="side-slope" placeholder="e.g., 2" type="number" value={sideSlope} onChange={(e) => setSideSlope(e.target.value)} />
             </div>
           )}
+
           <Button className="w-full" onClick={calculateResults}>Calculate</Button>
         </CardContent>
       </Card>
@@ -175,12 +214,12 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
         )}
         <Card>
           <CardHeader>
-            <CardTitle>Results</CardTitle>
-            <CardDescription>Calculated channel characteristics.</CardDescription>
+            <CardTitle>Hydraulic Results</CardTitle>
+            <CardDescription>Calculated flow characteristics.</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-2 md:grid-cols-2 gap-6">
             <div className="bg-secondary p-6 rounded-lg">
-              <Label className="text-sm text-muted-foreground">Flow Depth ({lengthUnit})</Label>
+              <Label className="text-sm text-muted-foreground">Normal Flow Depth ({lengthUnit})</Label>
               <p className="text-3xl font-bold">{results?.flowDepth ?? '-'}</p>
             </div>
             <div className="bg-secondary p-6 rounded-lg">
@@ -197,6 +236,26 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
             </div>
           </CardContent>
         </Card>
+        {results && (
+          <Card className="animate-in fade-in">
+            <CardHeader>
+              <CardTitle>Final Channel Design</CardTitle>
+              <CardDescription>Recommended final dimensions for construction.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-primary/10 p-6 rounded-lg border border-primary/20">
+                <Label className="text-sm text-muted-foreground">Total Channel Depth ({lengthUnit})</Label>
+                <p className="text-3xl font-bold">{results.totalDepth}</p>
+                <p className="text-xs text-muted-foreground">Flow Depth + Freeboard, rounded up</p>
+              </div>
+              <div className="bg-primary/10 p-6 rounded-lg border border-primary/20">
+                <Label className="text-sm text-muted-foreground">Top Width of Channel ({lengthUnit})</Label>
+                <p className="text-3xl font-bold">{results.topWidth}</p>
+                <p className="text-xs text-muted-foreground">At total channel depth</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
         <Card>
           <CardHeader>
             <CardTitle>Channel Visualization</CardTitle>

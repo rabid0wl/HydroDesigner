@@ -8,22 +8,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import type { Units } from "@/app/page";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle, TrendingUp } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 
 interface OpenChannelDesignProps {
   units: Units;
 }
 
 type Shape = "rectangular" | "trapezoidal" | "triangular" | "circular";
-type LiningType = "canal-bank" | "hard-surface" | "earth-lining";
-
+type LiningType = "earth-lining" | "hard-surface";
 
 interface Results {
   flowDepth: string;
   flowVelocity: string;
   froudeNumber: string;
   flowState: string;
-  freeboard: string;
+  liningFreeboard: string;
+  bankFreeboard: string;
+  controllingFreeboard: string;
   totalDepth: string;
   topWidth: string;
 }
@@ -35,7 +36,7 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
   const [channelShape, setChannelShape] = useState<Shape | "">("rectangular");
   const [bottomWidth, setBottomWidth] = useState("");
   const [sideSlope, setSideSlope] = useState("");
-  const [liningType, setLiningType] = useState<LiningType>("earth-lining");
+  const [liningType, setLiningType] = useState<LiningType>("hard-surface");
 
 
   const [results, setResults] = useState<Results | null>(null);
@@ -47,24 +48,30 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
   const lengthUnit = isMetric ? 'm' : 'ft';
   const velocityUnit = isMetric ? 'm/s' : 'ft/s';
 
-  const calculateFreeboardFromChart = (capacity: number) => {
-    // These are approximations of the curves from the provided chart.
-    // y = a * ln(x) + b, where y is freeboard and x is capacity
-    let a: number, b: number;
-    switch(liningType) {
-      case 'earth-lining': // Top curve
-        a = 0.6; b = 0;
-        break;
-      case 'hard-surface': // Bottom curve
-        a = 0.45; b = -0.5;
-        break;
-      case 'canal-bank': // Middle curve
-      default:
-        a = 0.5; b = -0.2;
-        break;
-    }
-    const freeboard = a * Math.log(capacity) + b;
-    return Math.max(freeboard, 0.5); // Minimum of 0.5ft from chart
+  const calculateFreeboardsFromChart = (capacity: number) => {
+    // These are logarithmic approximations (y = a*ln(x) + b) of the three curves from the chart.
+    // Coefficients are calibrated based on the user-provided values at 500 cfs.
+    
+    // Top curve: Required Bank Height above W.S. (Height of canal bank above W.S. ≈ 2.3 ft at 500 cfs)
+    const bankA = 0.354, bankB = 0.1; 
+    const bankFreeboard = bankA * Math.log(capacity) + bankB;
+
+    // Middle curve of the two bottom ones: Hard surface lining (≈ 1.6 ft at 500 cfs)
+    const hardA = 0.225, hardB = 0.2; 
+    const hardSurfaceFreeboard = hardA * Math.log(capacity) + hardB;
+    
+    // Bottom curve: Earth lining (≈ 1.2 ft at 500 cfs)
+    const earthA = 0.161, earthB = 0.2;
+    const earthLiningFreeboard = earthA * Math.log(capacity) + earthB;
+
+    const liningFreeboard = liningType === 'earth-lining' ? earthLiningFreeboard : hardSurfaceFreeboard;
+    const controllingFreeboard = Math.max(liningFreeboard, bankFreeboard);
+
+    return {
+      liningFreeboard: Math.max(liningFreeboard, 0.5), // Min 0.5ft
+      bankFreeboard: Math.max(bankFreeboard, 0.5), // Min 0.5ft
+      controllingFreeboard: Math.max(controllingFreeboard, 0.5) // Min 0.5ft
+    };
   };
 
 
@@ -153,19 +160,26 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
     const Fr = v / Math.sqrt(g * D);
     const flowState = Fr < 1 ? "Subcritical" : Fr > 1 ? "Supercritical" : "Critical";
 
-    let freeboard;
+    let freeboardResult = {
+        liningFreeboard: 0,
+        bankFreeboard: 0,
+        controllingFreeboard: 0,
+    };
     if (isMetric) {
-      const freeboardDepth1 = final_y / 3;
       // Convert 0.5ft to meters for metric default
-      const freeboardDepth2 = 0.1524;
-      freeboard = Math.max(freeboardDepth1, freeboardDepth2);
+      const defaultFreeboard = 0.1524;
+      freeboardResult = {
+          liningFreeboard: Math.max(final_y / 3, defaultFreeboard),
+          bankFreeboard: Math.max(final_y / 3, defaultFreeboard),
+          controllingFreeboard: Math.max(final_y / 3, defaultFreeboard),
+      }
     } else {
       // Use the chart-based calculation for US units
-      freeboard = calculateFreeboardFromChart(Q);
+      freeboardResult = calculateFreeboardsFromChart(Q);
     }
-
-    const totalCalculatedDepth = final_y + freeboard;
-    const finalTotalDepth = Math.ceil(totalCalculatedDepth);
+    
+    const totalCalculatedDepth = final_y + freeboardResult.controllingFreeboard;
+    const finalTotalDepth = isMetric ? (Math.ceil(totalCalculatedDepth * 10) / 10) : Math.ceil(totalCalculatedDepth);
     
     let finalTopWidth;
     if (channelShape === 'rectangular') {
@@ -179,7 +193,9 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
       flowVelocity: v.toFixed(2),
       froudeNumber: Fr.toFixed(2),
       flowState: flowState,
-      freeboard: freeboard.toFixed(2),
+      liningFreeboard: freeboardResult.liningFreeboard.toFixed(2),
+      bankFreeboard: freeboardResult.bankFreeboard.toFixed(2),
+      controllingFreeboard: freeboardResult.controllingFreeboard.toFixed(2),
       totalDepth: finalTotalDepth.toFixed(2),
       topWidth: finalTopWidth.toFixed(2),
     });
@@ -190,7 +206,7 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
       <Card className="lg:col-span-1">
         <CardHeader>
           <CardTitle>Channel Parameters</CardTitle>
-          <CardDescription>Enter the hydraulic and geometric properties of the open channel.</CardDescription>
+          <CardDescription>Enter the properties of the channel and lining.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
@@ -221,15 +237,14 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
           </div>
            {!isMetric && (
               <div className="space-y-2 animate-in fade-in">
-                <Label htmlFor="lining-type">Lining Type</Label>
+                <Label htmlFor="lining-type">Lining Type (for Freeboard)</Label>
                 <Select onValueChange={(value) => setLiningType(value as LiningType)} value={liningType}>
                   <SelectTrigger id="lining-type">
                     <SelectValue placeholder="Select lining type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="earth-lining">Earth Lining (Unimproved)</SelectItem>
-                    <SelectItem value="canal-bank">Canal Bank (Improved)</SelectItem>
-                    <SelectItem value="hard-surface">Hard Surface / Concrete</SelectItem>
+                    <SelectItem value="earth-lining">Earth Lining</SelectItem>
+                    <SelectItem value="hard-surface">Hard Surface / Concrete / Membrane</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -277,8 +292,11 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
               <p className="text-3xl font-bold">{results ? `${results.froudeNumber} (${results.flowState})` : '-'}</p>
             </div>
             <div className="bg-secondary p-6 rounded-lg">
-              <Label className="text-sm text-muted-foreground">Required Freeboard ({lengthUnit})</Label>
-              <p className="text-3xl font-bold">{results?.freeboard ?? '-'}</p>
+                <Label className="text-sm text-muted-foreground">Freeboard Requirements ({lengthUnit})</Label>
+                <div className="text-lg font-bold mt-1">
+                    <p>Lining: {results?.liningFreeboard ?? '-'}</p>
+                    <p>Bank: {results?.bankFreeboard ?? '-'}</p>
+                </div>
             </div>
           </CardContent>
         </Card>
@@ -288,7 +306,12 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
               <CardTitle>Final Channel Design</CardTitle>
               <CardDescription>Recommended final dimensions for construction.</CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-primary/10 p-6 rounded-lg border border-primary/20">
+                <Label className="text-sm text-muted-foreground">Design Freeboard ({lengthUnit})</Label>
+                <p className="text-3xl font-bold">{results.controllingFreeboard}</p>
+                <p className="text-xs text-muted-foreground">Controlling freeboard value</p>
+              </div>
               <div className="bg-primary/10 p-6 rounded-lg border border-primary/20">
                 <Label className="text-sm text-muted-foreground">Total Channel Depth ({lengthUnit})</Label>
                 <p className="text-3xl font-bold">{results.totalDepth}</p>

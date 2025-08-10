@@ -178,38 +178,22 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
             <CardTitle>Results</CardTitle>
             <CardDescription>Calculated channel characteristics.</CardDescription>
           </CardHeader>
-          <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-secondary p-4 rounded-lg">
+          <CardContent className="grid grid-cols-2 md:grid-cols-2 gap-6">
+            <div className="bg-secondary p-6 rounded-lg">
               <Label className="text-sm text-muted-foreground">Flow Depth ({lengthUnit})</Label>
-              <p className="text-2xl font-bold">{results?.flowDepth ?? '-'}</p>
+              <p className="text-3xl font-bold">{results?.flowDepth ?? '-'}</p>
             </div>
-            <div className="bg-secondary p-4 rounded-lg">
+            <div className="bg-secondary p-6 rounded-lg">
               <Label className="text-sm text-muted-foreground">Flow Velocity ({velocityUnit})</Label>
-              <p className="text-2xl font-bold">{results?.flowVelocity ?? '-'}</p>
+              <p className="text-3xl font-bold">{results?.flowVelocity ?? '-'}</p>
             </div>
-            <div className="bg-secondary p-4 rounded-lg">
+            <div className="bg-secondary p-6 rounded-lg">
               <Label className="text-sm text-muted-foreground">Froude Number</Label>
-              <p className="text-2xl font-bold">{results?.froudeNumber ?? '-'}</p>
+              <p className="text-3xl font-bold">{results ? `${results.froudeNumber} (${results.flowState})` : '-'}</p>
             </div>
-            <div className="bg-secondary p-4 rounded-lg">
-              <Label className="text-sm text-muted-foreground">Flow State</Label>
-              <p className="text-2xl font-bold">{results?.flowState ?? '-'}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-6 w-6 text-primary" />
-                Freeboard Requirement
-            </CardTitle>
-            <CardDescription>Recommended vertical distance from the water surface to the top of the channel.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-secondary p-6 rounded-lg text-center">
+            <div className="bg-secondary p-6 rounded-lg">
               <Label className="text-sm text-muted-foreground">Required Freeboard ({lengthUnit})</Label>
-              <p className="text-4xl font-bold mt-2">{results?.freeboard ?? '-'}</p>
-              <p className="text-muted-foreground text-sm mt-1">Greater of 1/3 flow depth or {isMetric ? '0.15m' : '0.5ft'}</p>
+              <p className="text-3xl font-bold">{results?.freeboard ?? '-'}</p>
             </div>
           </CardContent>
         </Card>

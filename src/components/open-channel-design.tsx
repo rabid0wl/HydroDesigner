@@ -49,28 +49,29 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
   const velocityUnit = isMetric ? 'm/s' : 'ft/s';
 
   const calculateFreeboardsFromChart = (capacity: number) => {
-    // These are logarithmic approximations (y = a*ln(x) + b) of the three curves from the chart.
-    // Coefficients are calibrated based on the user-provided values at 500 cfs.
+    // Formulas provided by the user based on the freeboard chart.
     
-    // Top curve: Required Bank Height above W.S. (Height of canal bank above W.S. ≈ 2.3 ft at 500 cfs)
-    const bankA = 0.354, bankB = 0.1; 
-    const bankFreeboard = bankA * Math.log(capacity) + bankB;
+    // Top curve: Height of Canal Bank Above W.S.
+    const bankFreeboard = 0.49 * Math.pow(capacity, 0.28);
 
-    // Middle curve of the two bottom ones: Hard surface lining (≈ 1.6 ft at 500 cfs)
-    const hardA = 0.225, hardB = 0.2; 
-    const hardSurfaceFreeboard = hardA * Math.log(capacity) + hardB;
+    // Middle curve: Height of hard surface or buried membrane lining above W.S.
+    const hardSurfaceFreeboard = 0.31 * Math.pow(capacity, 0.24);
     
-    // Bottom curve: Earth lining (≈ 1.2 ft at 500 cfs)
-    const earthA = 0.161, earthB = 0.2;
-    const earthLiningFreeboard = earthA * Math.log(capacity) + earthB;
+    // Bottom curve: Height of earth lining above W.S. (Piecewise function)
+    let earthLiningFreeboard;
+    if (capacity < 200) {
+      earthLiningFreeboard = 0.5;
+    } else {
+      earthLiningFreeboard = 0.10 * Math.pow(capacity, 0.30);
+    }
 
     const liningFreeboard = liningType === 'earth-lining' ? earthLiningFreeboard : hardSurfaceFreeboard;
     const controllingFreeboard = Math.max(liningFreeboard, bankFreeboard);
 
     return {
-      liningFreeboard: Math.max(liningFreeboard, 0.5), // Min 0.5ft
-      bankFreeboard: Math.max(bankFreeboard, 0.5), // Min 0.5ft
-      controllingFreeboard: Math.max(controllingFreeboard, 0.5) // Min 0.5ft
+      liningFreeboard: Math.max(liningFreeboard, 0.5), // Min 0.5ft safeguard
+      bankFreeboard: Math.max(bankFreeboard, 0.5), // Min 0.5ft safeguard
+      controllingFreeboard: Math.max(controllingFreeboard, 0.5) // Min 0.5ft safeguard
     };
   };
 
@@ -206,7 +207,7 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
       <Card className="lg:col-span-1">
         <CardHeader>
           <CardTitle>Channel Parameters</CardTitle>
-          <CardDescription>Enter the properties of the channel and lining.</CardDescription>
+          <CardDescription>Enter the properties of the channel and flow.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">

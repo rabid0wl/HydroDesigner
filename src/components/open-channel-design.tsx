@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import type { Units } from "@/app/page";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, TrendingUp } from "lucide-react";
 
 interface OpenChannelDesignProps {
   units: Units;
@@ -21,6 +21,7 @@ interface Results {
   flowVelocity: string;
   froudeNumber: string;
   flowState: string;
+  freeboard: string;
 }
 
 export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
@@ -108,11 +109,16 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
     const Fr = v / Math.sqrt(g * D);
     const flowState = Fr < 1 ? "Subcritical" : Fr > 1 ? "Supercritical" : "Critical";
 
+    const freeboardDepth1 = final_y / 3;
+    const freeboardDepth2 = isMetric ? 0.1524 : 0.5; // 0.5 ft or its metric equivalent
+    const freeboard = Math.max(freeboardDepth1, freeboardDepth2);
+
     setResults({
       flowDepth: final_y.toFixed(2),
       flowVelocity: v.toFixed(2),
       froudeNumber: Fr.toFixed(2),
       flowState: flowState,
+      freeboard: freeboard.toFixed(2),
     });
   };
 
@@ -121,7 +127,7 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
       <Card className="lg:col-span-1">
         <CardHeader>
           <CardTitle>Channel Parameters</CardTitle>
-          <CardDescription>Enter the hydraulic and geometric properties of the open channel.</CardDescription>
+          <CardDescription>Enter the hydraulic and geometric properties of the open channel to calculate flow characteristics.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
@@ -188,6 +194,22 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
             <div className="bg-secondary p-4 rounded-lg">
               <Label className="text-sm text-muted-foreground">Flow State</Label>
               <p className="text-2xl font-bold">{results?.flowState ?? '-'}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-6 w-6 text-primary" />
+                Freeboard Requirement
+            </CardTitle>
+            <CardDescription>Recommended vertical distance from the water surface to the top of the channel.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-secondary p-6 rounded-lg text-center">
+              <Label className="text-sm text-muted-foreground">Required Freeboard ({lengthUnit})</Label>
+              <p className="text-4xl font-bold mt-2">{results?.freeboard ?? '-'}</p>
+              <p className="text-muted-foreground text-sm mt-1">Greater of 1/3 flow depth or {isMetric ? '0.15m' : '0.5ft'}</p>
             </div>
           </CardContent>
         </Card>

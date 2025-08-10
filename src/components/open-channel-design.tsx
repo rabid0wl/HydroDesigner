@@ -30,14 +30,14 @@ interface Results {
 
 const manningData = [
     { label: "Concrete, Finished", value: "0.012", type: "hard-surface" },
-    { label: "Earth, Clean, Straight", value: "0.019", type: "earth-lining" },
+    { label: "Earth, Clean, Straight", value: "0.022", type: "earth-lining" },
     { label: "Earth, Winding, Some Weeds", value: "0.025", type: "earth-lining" },
-    { label: "Gravel, Firm, Clean", value: "0.027", type: "earth-lining" },
-    { label: "Rock Cut, Smooth", value: "0.033", type: "hard-surface" },
+    { label: "Gravel, Firm, Clean", value: "0.025", type: "earth-lining" },
+    { label: "Rock Cut, Smooth", value: "0.035", type: "hard-surface" },
     { label: "Rock Cut, Jagged", value: "0.040", type: "hard-surface" },
-    { label: "Grass, Short", value: "0.028", type: "earth-lining" },
-    { label: "Grass, High", value: "0.040", type: "earth-lining" },
-    { label: "Brush & Weeds, Dense", value: "0.100", type: "earth-lining" },
+    { label: "Grass, Short", value: "0.030", type: "earth-lining" },
+    { label: "Grass, High", value: "0.035", type: "earth-lining" },
+    { label: "Brush & Weeds, Dense", value: "0.050", type: "earth-lining" },
     { label: "Custom", value: "custom", type: "custom" },
 ];
 
@@ -67,33 +67,40 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
         const selectedManning = manningData.find(m => m.value === value);
         if (selectedManning) {
             setManningN(selectedManning.value);
+            setCustomManningN(selectedManning.value);
         }
     }
   }
 
   const getLiningTypeFromManning = () => {
     if (manningN === 'custom') {
+        // Default to hard-surface for custom, user can override if needed
+        // Or we can add another input for this case. For now, let's assume.
         return 'hard-surface';
     }
     const selected = manningData.find(m => m.value === manningN);
     return selected?.type || 'hard-surface';
   }
 
-
   const calculateFreeboardsFromChart = (capacity: number) => {
     const liningType = getLiningTypeFromManning();
     
+    // H ≈ 0.49 * C^0.28
     const bankFreeboard = 0.49 * Math.pow(capacity, 0.28);
-    const hardSurfaceFreeboard = 0.31 * Math.pow(capacity, 0.24);
-    
-    let earthLiningFreeboard;
-    if (capacity < 200) {
-      earthLiningFreeboard = 0.5;
-    } else {
-      earthLiningFreeboard = 0.10 * Math.pow(capacity, 0.30);
-    }
 
-    const liningFreeboard = liningType === 'earth-lining' ? earthLiningFreeboard : hardSurfaceFreeboard;
+    let liningFreeboard;
+    if (liningType === 'earth-lining') {
+        // Piecewise function for Earth Lining
+        if (capacity < 200) {
+            liningFreeboard = 0.5; // Constant for C < 200 cfs
+        } else {
+            // H ≈ 0.10 * C^0.30 for C >= 200 cfs
+            liningFreeboard = 0.10 * Math.pow(capacity, 0.30);
+        }
+    } else { // Hard Surface
+        // H ≈ 0.31 * C^0.24
+        liningFreeboard = 0.31 * Math.pow(capacity, 0.24);
+    }
     
     return {
       liningFreeboard: Math.max(liningFreeboard, 0.5), 
@@ -108,14 +115,19 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
 
     const Q = parseFloat(flowRate);
     const S = parseFloat(channelSlope);
-    const n = manningN === 'custom' ? parseFloat(customManningN) : parseFloat(manningN);
+    const n_val = manningN === 'custom' ? parseFloat(customManningN) : parseFloat(manningN);
     const b = parseFloat(bottomWidth);
     const z = parseFloat(sideSlope) || 0;
 
-    const requiredInputs = [Q, S, n, b];
-     if (channelShape === 'trapezoidal') {
-      requiredInputs.push(z);
+    const requiredInputs = [Q, S, n_val, b];
+     if (channelShape === 'trapezoidal' && z < 0) {
+      setError("Side slope must be a positive number.");
+      return;
     }
+    if (channelShape === 'trapezoidal') {
+        requiredInputs.push(z);
+    }
+
 
     if (requiredInputs.some(val => isNaN(val) || val <= 0)) {
       setError("Please fill in all required fields with valid, positive numbers.");
@@ -127,7 +139,7 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
       return;
     }
 
-    const unitConversion = isMetric ? 1.0 : 1.49;
+    const unitConversion = isMetric ? 1.0 : 1.486;
 
     const manningFunc = (y: number) => {
       let A, P;
@@ -140,18 +152,19 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
       }
       if (P === 0) return -Q;
       const R = A / P;
-      return (unitConversion / n) * A * Math.pow(R, 2/3) * Math.pow(S, 1/2) - Q;
+      return (unitConversion / n_val) * A * Math.pow(R, 2/3) * Math.pow(S, 1/2) - Q;
     };
 
     let y_low = 0.0001;
-    let y_high = 50.0;
+    let y_high = 50.0; // Increased upper bound
     let y_mid = 0;
     const tol = 1e-6;
     let iterations = 0;
     const maxIterations = 100;
 
-    if (manningFunc(y_low) * manningFunc(y_high) >= 0) {
-        setError("Cannot find a solution in the expected range. Please check your input values, they may be physically unrealistic.");
+    // Check if a solution exists in the bracket
+    if (manningFunc(y_low) * manningFunc(y_high) > 0) {
+        setError("Cannot find a solution in the expected range. Please check your input values, they may be physically unrealistic or require a larger depth.");
         return;
     }
 
@@ -191,18 +204,24 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
         liningFreeboard: 0,
         bankFreeboard: 0,
     };
+
+    // Freeboard calculation based on units
     if (isMetric) {
+      const metricCapacity = Q;
       const defaultFreeboard = 0.1524; // 0.5ft in meters
+      // Basic freeboard for metric until a specific chart is provided
       freeboardResult = {
           liningFreeboard: Math.max(final_y / 3, defaultFreeboard),
           bankFreeboard: Math.max(final_y / 3, defaultFreeboard),
       }
     } else {
-      freeboardResult = calculateFreeboardsFromChart(Q);
+      const usCapacity = Q; // Q is already in cfs
+      freeboardResult = calculateFreeboardsFromChart(usCapacity);
     }
     
     const controllingFreeboard = Math.max(freeboardResult.liningFreeboard, freeboardResult.bankFreeboard);
     const totalCalculatedDepth = final_y + controllingFreeboard;
+    // Round up to nearest whole foot for US, or nearest 0.1m for metric
     const finalTotalDepth = isMetric ? (Math.ceil(totalCalculatedDepth * 10) / 10) : (Math.ceil(totalCalculatedDepth));
     
     let finalTopWidth;
@@ -390,20 +409,21 @@ interface ChannelVisualizationProps {
 }
 
 const ChannelVisualization = ({ shape, bottomWidth, sideSlope, flowDepth, totalDepth, units }: ChannelVisualizationProps) => {
-  if (!bottomWidth || !totalDepth || !flowDepth) return null;
+  if (!bottomWidth || !totalDepth || !flowDepth || isNaN(bottomWidth) || isNaN(totalDepth) || isNaN(flowDepth)) return null;
 
   const lengthUnit = units === 'metric' ? 'm' : 'ft';
   const freeboard = totalDepth - flowDepth;
 
-  const totalTopWidth = bottomWidth + 2 * sideSlope * totalDepth;
-  const waterTopWidth = bottomWidth + 2 * sideSlope * flowDepth;
+  const totalTopWidth = shape === 'rectangular' ? bottomWidth : bottomWidth + 2 * sideSlope * totalDepth;
+  const waterTopWidth = shape === 'rectangular' ? bottomWidth : bottomWidth + 2 * sideSlope * flowDepth;
+  
+  const viewWidth = totalTopWidth * 1.25;
+  const viewHeight = totalDepth * 1.25;
 
-  const maxViewWidth = totalTopWidth * 1.2;
-  const maxViewHeight = totalDepth * 1.2;
-
-  const containerHeight = 240; 
-  const scale = containerHeight / maxViewHeight;
-  const containerWidth = maxViewWidth * scale + 80; 
+  const containerWidth = 500;
+  const containerHeight = (containerWidth / viewWidth) * viewHeight;
+  
+  const scale = containerWidth / viewWidth;
 
   const scaled = {
     totalDepth: totalDepth * scale,
@@ -411,74 +431,68 @@ const ChannelVisualization = ({ shape, bottomWidth, sideSlope, flowDepth, totalD
     bottomWidth: bottomWidth * scale,
     totalTopWidth: totalTopWidth * scale,
     waterTopWidth: waterTopWidth * scale,
-    sideSlopeOffset: sideSlope * totalDepth * scale,
-    waterSideSlopeOffset: sideSlope * flowDepth * scale,
   };
 
-  const channelPath = `
-    M 0,0 
-    L ${scaled.sideSlopeOffset},${scaled.totalDepth} 
-    L ${scaled.sideSlopeOffset + scaled.bottomWidth},${scaled.totalDepth} 
-    L ${scaled.totalTopWidth},0 Z
-  `;
+  const xOffset = (containerWidth - scaled.totalTopWidth) / 2;
+  const yOffset = (containerHeight - scaled.totalDepth) / 2;
 
-  const waterPath = `
-    M ${scaled.sideSlopeOffset - scaled.waterSideSlopeOffset}, ${scaled.totalDepth - scaled.flowDepth}
-    L ${scaled.sideSlopeOffset},${scaled.totalDepth}
-    L ${scaled.sideSlopeOffset + scaled.bottomWidth},${scaled.totalDepth}
-    L ${scaled.sideSlopeOffset + scaled.bottomWidth + scaled.waterSideSlopeOffset},${scaled.totalDepth - scaled.flowDepth} Z
-  `;
-  
+  const totalDepthSideSlopeOffset = sideSlope * totalDepth * scale;
+  const waterDepthSideSlopeOffset = sideSlope * flowDepth * scale;
+
+  const channelPoints = [
+    { x: xOffset, y: yOffset },
+    { x: xOffset + scaled.totalTopWidth, y: yOffset },
+    { x: xOffset + scaled.totalTopWidth - totalDepthSideSlopeOffset, y: yOffset + scaled.totalDepth },
+    { x: xOffset + totalDepthSideSlopeOffset, y: yOffset + scaled.totalDepth },
+  ];
+
+  const waterPoints = [
+    { x: xOffset + (scaled.totalTopWidth - scaled.waterTopWidth) / 2, y: yOffset + scaled.totalDepth - scaled.flowDepth },
+    { x: xOffset + (scaled.totalTopWidth + scaled.waterTopWidth) / 2, y: yOffset + scaled.totalDepth - scaled.flowDepth },
+    { x: xOffset + scaled.totalTopWidth - totalDepthSideSlopeOffset, y: yOffset + scaled.totalDepth },
+    { x: xOffset + totalDepthSideSlopeOffset, y: yOffset + scaled.totalDepth },
+  ];
+
+  const channelPath = `M ${channelPoints[0].x},${channelPoints[0].y} L ${channelPoints[1].x},${channelPoints[1].y} L ${channelPoints[2].x},${channelPoints[2].y} L ${channelPoints[3].x},${channelPoints[3].y} Z`;
+  const waterPath = `M ${waterPoints[0].x},${waterPoints[0].y} L ${waterPoints[1].x},${waterPoints[1].y} L ${waterPoints[2].x},${waterPoints[2].y} L ${waterPoints[3].x},${waterPoints[3].y} Z`;
+
   const textStyle = { fontSize: '10px', fill: 'hsl(var(--muted-foreground))' };
-
+  
   return (
-    <div className="w-full h-full flex items-center justify-center">
-        <svg
-            viewBox={`0 0 ${containerWidth} ${containerHeight + 40}`}
-            preserveAspectRatio="xMidYMid meet"
-            className="w-full h-full"
-        >
-          <g transform={`translate(${containerWidth/2 - scaled.totalTopWidth/2}, 10)`}>
-            {/* Channel Shape */}
-            <path d={channelPath} stroke="hsl(var(--muted-foreground))" strokeWidth="2" fill="hsl(var(--background))" transform={`translate(0, ${containerHeight - scaled.totalDepth}) rotate(180, ${scaled.totalTopWidth/2}, ${scaled.totalDepth/2})`} />
+      <svg
+          viewBox={`0 0 ${containerWidth} ${containerHeight}`}
+          preserveAspectRatio="xMidYMid meet"
+          className="w-full h-full"
+      >
+          {/* Channel Shape */}
+          <path d={channelPath} stroke="hsl(var(--muted-foreground))" strokeWidth="1" fill="hsl(var(--card))" />
 
-            {/* Water */}
-            <path
-                d={waterPath}
-                fill="hsl(var(--primary)/0.3)"
-                stroke="hsl(var(--primary))"
-                strokeWidth="1"
-                transform={`translate(0, ${containerHeight - scaled.totalDepth}) rotate(180, ${scaled.totalTopWidth/2}, ${scaled.totalDepth/2})`}
-            />
+          {/* Water */}
+          <path d={waterPath} fill="hsl(var(--primary)/0.5)" stroke="hsl(var(--primary))" strokeWidth="1" />
+          
+          {/* Dimensions */}
+          <g>
+              {/* Total Depth */}
+              <line x1={xOffset - 10} y1={yOffset} x2={xOffset - 10} y2={yOffset + scaled.totalDepth} stroke="hsl(var(--muted-foreground))" strokeWidth="0.5" strokeDasharray="2 2" />
+              <line x1={xOffset - 12} y1={yOffset} x2={xOffset - 8} y2={yOffset} stroke="hsl(var(--muted-foreground))" strokeWidth="0.5" />
+              <line x1={xOffset - 12} y1={yOffset + scaled.totalDepth} x2={xOffset - 8} y2={yOffset + scaled.totalDepth} stroke="hsl(var(--muted-foreground))" strokeWidth="0.5" />
+              <text x={xOffset - 15} y={yOffset + scaled.totalDepth / 2} transform={`rotate(-90, ${xOffset - 15}, ${yOffset + scaled.totalDepth/2})`} textAnchor="middle" dominantBaseline="middle" style={textStyle}>{`${totalDepth.toFixed(2)} ${lengthUnit}`}</text>
+              
+              {/* Flow Depth & Freeboard */}
+              <line x1={xOffset + scaled.totalTopWidth + 10} y1={yOffset + scaled.totalDepth - scaled.flowDepth} x2={xOffset + scaled.totalTopWidth + 10} y2={yOffset + scaled.totalDepth} stroke="hsl(var(--muted-foreground))" strokeWidth="0.5" strokeDasharray="2 2" />
+              <text x={xOffset + scaled.totalTopWidth + 15} y={yOffset + scaled.totalDepth - scaled.flowDepth / 2} textAnchor="start" dominantBaseline="middle" style={textStyle}>{`Flow: ${flowDepth.toFixed(2)}`}</text>
 
-            {/* Dimensions */}
-            <g transform={`translate(0, ${containerHeight - scaled.totalDepth})`}>
-                {/* Total Depth */}
-                <line x1="-10" y1="0" x2="-10" y2={scaled.totalDepth} stroke="hsl(var(--muted-foreground))" strokeWidth="1" strokeDasharray="2 2" />
-                <line x1="-15" y1="0" x2="-5" y2="0" stroke="hsl(var(--muted-foreground))" strokeWidth="1" />
-                <line x1="-15" y1={scaled.totalDepth} x2="-5" y2={scaled.totalDepth} stroke="hsl(var(--muted-foreground))" strokeWidth="1" />
-                <text x="-20" y={scaled.totalDepth/2} transform={`rotate(-90, -20, ${scaled.totalDepth/2})`} textAnchor="middle" style={textStyle}>{`${totalDepth.toFixed(2)} ${lengthUnit}`}</text>
-                
-                {/* Flow Depth */}
-                <line x1={scaled.totalTopWidth + 10} y1={scaled.totalDepth - scaled.flowDepth} x2={scaled.totalTopWidth + 10} y2={scaled.totalDepth} stroke="hsl(var(--muted-foreground))" strokeWidth="1" strokeDasharray="2 2" />
-                <line x1={scaled.totalTopWidth + 5} y1={scaled.totalDepth - scaled.flowDepth} x2={scaled.totalTopWidth + 15} y2={scaled.totalDepth - scaled.flowDepth} stroke="hsl(var(--muted-foreground))" strokeWidth="1" />
-                <line x1={scaled.totalTopWidth + 5} y1={scaled.totalDepth} x2={scaled.totalTopWidth + 15} y2={scaled.totalDepth} stroke="hsl(var(--muted-foreground))" strokeWidth="1" />
-                <text x={scaled.totalTopWidth + 20} y={scaled.totalDepth - scaled.flowDepth/2} textAnchor="start" dominantBaseline="middle" style={textStyle}>{`Flow: ${flowDepth.toFixed(2)}`}</text>
-
-                {/* Freeboard */}
-                <line x1={scaled.totalTopWidth + 10} y1="0" x2={scaled.totalTopWidth + 10} y2={scaled.totalDepth - scaled.flowDepth} stroke="hsl(var(--muted-foreground))" strokeWidth="1" strokeDasharray="2 2" />
-                <text x={scaled.totalTopWidth + 20} y={(scaled.totalDepth - scaled.flowDepth)/2} textAnchor="start" dominantBaseline="middle" style={textStyle}>{`Freeboard: ${freeboard.toFixed(2)}`}</text>
-
-                {/* Bottom Width */}
-                <line x1={scaled.sideSlopeOffset} y1={scaled.totalDepth + 10} x2={scaled.sideSlopeOffset + scaled.bottomWidth} y2={scaled.totalDepth + 10} stroke="hsl(var(--muted-foreground))" strokeWidth="1" strokeDasharray="2 2" />
-                <text x={scaled.sideSlopeOffset + scaled.bottomWidth / 2} y={scaled.totalDepth + 20} textAnchor="middle" style={textStyle}>{`${bottomWidth.toFixed(2)}`}</text>
-
-                {/* Top Width */}
-                <line x1="0" y1="-10" x2={scaled.totalTopWidth} y2="-10" stroke="hsl(var(--muted-foreground))" strokeWidth="1" strokeDasharray="2 2" />
-                 <text x={scaled.totalTopWidth / 2} y="-20" textAnchor="middle" style={textStyle}>{`Top Width: ${totalTopWidth.toFixed(2)} ${lengthUnit}`}</text>
-            </g>
+              <line x1={xOffset + scaled.totalTopWidth + 10} y1={yOffset} x2={xOffset + scaled.totalTopWidth + 10} y2={yOffset + scaled.totalDepth - scaled.flowDepth} stroke="hsl(var(--muted-foreground))" strokeWidth="0.5" strokeDasharray="2 2" />
+              <text x={xOffset + scaled.totalTopWidth + 15} y={yOffset + (scaled.totalDepth - scaled.flowDepth)/2} textAnchor="start" dominantBaseline="middle" style={textStyle}>{`Freeboard: ${freeboard.toFixed(2)}`}</text>
+              
+              {/* Top Width */}
+              <line x1={xOffset} y1={yOffset - 10} x2={xOffset + scaled.totalTopWidth} y2={yOffset - 10} stroke="hsl(var(--muted-foreground))" strokeWidth="0.5" strokeDasharray="2 2" />
+              <text x={xOffset + scaled.totalTopWidth / 2} y={yOffset - 15} textAnchor="middle" style={textStyle}>{`Top Width: ${totalTopWidth.toFixed(2)} ${lengthUnit}`}</text>
+          
+              {/* Bottom Width */}
+              <line x1={xOffset + totalDepthSideSlopeOffset} y1={yOffset + scaled.totalDepth + 10} x2={xOffset + scaled.totalTopWidth - totalDepthSideSlopeOffset} y2={yOffset + scaled.totalDepth + 10} stroke="hsl(var(--muted-foreground))" strokeWidth="0.5" strokeDasharray="2 2" />
+              <text x={xOffset + scaled.totalTopWidth / 2} y={yOffset + scaled.totalDepth + 15} textAnchor="middle" style={textStyle}>{`${bottomWidth.toFixed(2)}`}</text>
           </g>
-        </svg>
-    </div>
-  )
+      </svg>
+  );
 }

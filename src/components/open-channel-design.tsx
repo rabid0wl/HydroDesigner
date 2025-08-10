@@ -29,7 +29,7 @@ interface Results {
 }
 
 const manningData = [
-    { label: "Concrete, Finished", value: "0.012", type: "hard-surface" },
+    { label: "Concrete", value: "0.013", type: "hard-surface" },
     { label: "Earth, Clean, Straight", value: "0.022", type: "earth-lining" },
     { label: "Earth, Winding, Some Weeds", value: "0.025", type: "earth-lining" },
     { label: "Gravel, Firm, Clean", value: "0.025", type: "earth-lining" },
@@ -45,7 +45,7 @@ const manningData = [
 export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
   const [flowRate, setFlowRate] = useState("");
   const [channelSlope, setChannelSlope] = useState("");
-  const [manningN, setManningN] = useState("0.012");
+  const [manningN, setManningN] = useState("0.013");
   const [customManningN, setCustomManningN] = useState("");
   const [channelShape, setChannelShape] = useState<Shape | "">("rectangular");
   const [bottomWidth, setBottomWidth] = useState("");
@@ -244,74 +244,76 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <Card className="lg:col-span-1">
-        <CardHeader>
-          <CardTitle>Channel Design</CardTitle>
-          <CardDescription>Enter the properties of the channel and flow to calculate the design parameters.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="flow-rate">Flow Rate ({flowUnit})</Label>
-            <Input id="flow-rate" placeholder={isMetric ? "e.g., 10.5" : "e.g., 370"} type="number" value={flowRate} onChange={(e) => setFlowRate(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="channel-slope">Channel Slope ({slopeUnit})</Label>
-            <Input id="channel-slope" placeholder="e.g., 0.005" type="number" value={channelSlope} onChange={(e) => setChannelSlope(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="manning-material">Channel Material (Manning's n)</Label>
-            <Select onValueChange={handleManningSelect} value={manningN}>
-              <SelectTrigger id="manning-material">
-                <SelectValue placeholder="Select material" />
-              </SelectTrigger>
-              <SelectContent>
-                {manningData.map(m => (
-                    <SelectItem key={m.label} value={m.value}>
-                        {m.label} ({m.value !== 'custom' && `n=${m.value}`})
-                    </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {manningN === 'custom' && (
-            <div className="space-y-2 animate-in fade-in">
-              <Label htmlFor="manning-n">Custom Manning's Roughness (n)</Label>
-              <Input id="manning-n" placeholder="Enter custom 'n' value" type="number" value={customManningN} onChange={(e) => setCustomManningN(e.target.value)} />
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+      <div className="lg:col-span-1 space-y-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Channel Design</CardTitle>
+            <CardDescription>Enter the properties of the channel and flow to calculate the design parameters.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="flow-rate">Flow Rate ({flowUnit})</Label>
+              <Input id="flow-rate" placeholder={isMetric ? "e.g., 10.5" : "e.g., 370"} type="number" value={flowRate} onChange={(e) => setFlowRate(e.target.value)} />
             </div>
-          )}
-          
-          <div className="space-y-2">
-            <Label htmlFor="channel-shape">Channel Shape</Label>
-            <Select onValueChange={(value) => setChannelShape(value as Shape)} value={channelShape}>
-              <SelectTrigger id="channel-shape">
-                <SelectValue placeholder="Select shape" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="rectangular">Rectangular</SelectItem>
-                <SelectItem value="trapezoidal">Trapezoidal</SelectItem>
-                <SelectItem value="triangular" disabled>Triangular (coming soon)</SelectItem>
-                <SelectItem value="circular" disabled>Circular (coming soon)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-              <Label htmlFor="bottom-width">Bottom Width ({lengthUnit})</Label>
-              <Input id="bottom-width" placeholder={isMetric ? "e.g., 5" : "e.g., 16"} type="number" value={bottomWidth} onChange={(e) => setBottomWidth(e.target.value)} />
-          </div>
-
-          {channelShape === 'trapezoidal' && (
-            <div className="space-y-2 animate-in fade-in">
-              <Label htmlFor="side-slope">Side Slope (H:1V)</Label>
-              <Input id="side-slope" placeholder="e.g., 2" type="number" value={sideSlope} onChange={(e) => setSideSlope(e.target.value)} />
+            <div className="space-y-2">
+              <Label htmlFor="channel-slope">Channel Slope ({slopeUnit})</Label>
+              <Input id="channel-slope" placeholder="e.g., 0.005" type="number" value={channelSlope} onChange={(e) => setChannelSlope(e.target.value)} />
             </div>
-          )}
+            <div className="space-y-2">
+              <Label htmlFor="manning-material">Channel Material (Manning's n)</Label>
+              <Select onValueChange={handleManningSelect} value={manningN}>
+                <SelectTrigger id="manning-material">
+                  <SelectValue placeholder="Select material" />
+                </SelectTrigger>
+                <SelectContent>
+                  {manningData.map(m => (
+                      <SelectItem key={m.label} value={m.value}>
+                          {m.label} ({m.value !== 'custom' && `n=${m.value}`})
+                      </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <Button className="w-full" onClick={calculateResults}>Calculate</Button>
-        </CardContent>
-      </Card>
+            {manningN === 'custom' && (
+              <div className="space-y-2 animate-in fade-in">
+                <Label htmlFor="manning-n">Custom Manning's Roughness (n)</Label>
+                <Input id="manning-n" placeholder="Enter custom 'n' value" type="number" value={customManningN} onChange={(e) => setCustomManningN(e.target.value)} />
+              </div>
+            )}
+            
+            <div className="space-y-2">
+              <Label htmlFor="channel-shape">Channel Shape</Label>
+              <Select onValueChange={(value) => setChannelShape(value as Shape)} value={channelShape}>
+                <SelectTrigger id="channel-shape">
+                  <SelectValue placeholder="Select shape" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="rectangular">Rectangular</SelectItem>
+                  <SelectItem value="trapezoidal">Trapezoidal</SelectItem>
+                  <SelectItem value="triangular" disabled>Triangular (coming soon)</SelectItem>
+                  <SelectItem value="circular" disabled>Circular (coming soon)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+                <Label htmlFor="bottom-width">Bottom Width ({lengthUnit})</Label>
+                <Input id="bottom-width" placeholder={isMetric ? "e.g., 5" : "e.g., 16"} type="number" value={bottomWidth} onChange={(e) => setBottomWidth(e.target.value)} />
+            </div>
+
+            {channelShape === 'trapezoidal' && (
+              <div className="space-y-2 animate-in fade-in">
+                <Label htmlFor="side-slope">Side Slope (H:1V)</Label>
+                <Input id="side-slope" placeholder="e.g., 2" type="number" value={sideSlope} onChange={(e) => setSideSlope(e.target.value)} />
+              </div>
+            )}
+
+            <Button className="w-full" onClick={calculateResults}>Calculate</Button>
+          </CardContent>
+        </Card>
+      </div>
       <div className="lg:col-span-2 space-y-8">
         {error && (
           <Alert variant="destructive">
@@ -377,7 +379,7 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
             <CardTitle>Channel Visualization</CardTitle>
             <CardDescription>A cross-section of the designed channel.</CardDescription>
           </CardHeader>
-          <CardContent className="flex items-center justify-center bg-muted min-h-80 rounded-lg p-4">
+          <CardContent className="flex items-center justify-center bg-muted min-h-[450px] rounded-lg p-4">
              {results && channelShape ? (
               <ChannelVisualization
                 shape={channelShape as 'rectangular' | 'trapezoidal'}
@@ -415,14 +417,16 @@ const ChannelVisualization = ({ shape, bottomWidth, sideSlope, flowDepth, totalD
 
   const totalTopWidth = shape === 'rectangular' ? bottomWidth : bottomWidth + 2 * sideSlope * totalDepth;
   
-  const viewPadding = 40; 
-  const viewWidth = totalTopWidth + viewPadding * 2;
-  const viewHeight = totalDepth + viewPadding * 2;
-
+  const viewPadding = 50; 
   const containerWidth = 600; 
-  const containerHeight = (containerWidth / viewWidth) * viewHeight;
-  
-  const scale = (containerWidth - viewPadding * 2) / totalTopWidth;
+  const containerHeight = 400;
+
+  let scale;
+  if (totalTopWidth / totalDepth > containerWidth / containerHeight) {
+    scale = (containerWidth - viewPadding * 2) / totalTopWidth;
+  } else {
+    scale = (containerHeight - viewPadding * 2) / totalDepth;
+  }
 
   const scaled = {
     totalDepth: totalDepth * scale,

@@ -244,76 +244,79 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-      <Card className="lg:col-span-1">
-        <CardHeader>
-          <CardTitle>Channel Design</CardTitle>
-          <CardDescription>Enter the properties of the channel and flow to calculate the design parameters.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="flow-rate">Flow Rate ({flowUnit})</Label>
-            <Input id="flow-rate" placeholder={isMetric ? "e.g., 10.5" : "e.g., 370"} type="number" value={flowRate} onChange={(e) => setFlowRate(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="channel-slope">Channel Slope ({slopeUnit})</Label>
-            <Input id="channel-slope" placeholder="e.g., 0.005" type="number" value={channelSlope} onChange={(e) => setChannelSlope(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="manning-material">Channel Material (Manning's n)</Label>
-            <Select onValueChange={handleManningSelect} value={manningN}>
-              <SelectTrigger id="manning-material">
-                <SelectValue placeholder="Select material" />
-              </SelectTrigger>
-              <SelectContent>
-                {manningData.map(m => (
-                    <SelectItem key={m.label} value={m.value}>
-                        {m.label} ({m.value !== 'custom' && `n=${m.value}`})
-                    </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {manningN === 'custom' && (
-            <div className="space-y-2 animate-in fade-in">
-              <Label htmlFor="manning-n">Custom Manning's Roughness (n)</Label>
-              <Input id="manning-n" placeholder="Enter custom 'n' value" type="number" value={customManningN} onChange={(e) => setCustomManningN(e.target.value)} />
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+      <div className="lg:col-span-1 space-y-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Channel Design</CardTitle>
+            <CardDescription>Enter the properties of the channel and flow to calculate the design parameters.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="flow-rate">Flow Rate ({flowUnit})</Label>
+              <Input id="flow-rate" placeholder={isMetric ? "e.g., 10.5" : "e.g., 370"} type="number" value={flowRate} onChange={(e) => setFlowRate(e.target.value)} />
             </div>
-          )}
-          
-          <div className="space-y-2">
-            <Label htmlFor="channel-shape">Channel Shape</Label>
-            <Select onValueChange={(value) => setChannelShape(value as Shape)} value={channelShape}>
-              <SelectTrigger id="channel-shape">
-                <SelectValue placeholder="Select shape" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="rectangular">Rectangular</SelectItem>
-                <SelectItem value="trapezoidal">Trapezoidal</SelectItem>
-                <SelectItem value="triangular" disabled>Triangular (coming soon)</SelectItem>
-                <SelectItem value="circular" disabled>Circular (coming soon)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-              <Label htmlFor="bottom-width">Bottom Width ({lengthUnit})</Label>
-              <Input id="bottom-width" placeholder={isMetric ? "e.g., 5" : "e.g., 16"} type="number" value={bottomWidth} onChange={(e) => setBottomWidth(e.target.value)} />
-          </div>
-
-          {channelShape === 'trapezoidal' && (
-            <div className="space-y-2 animate-in fade-in">
-              <Label htmlFor="side-slope">Side Slope (H:1V)</Label>
-              <Input id="side-slope" placeholder="e.g., 2" type="number" value={sideSlope} onChange={(e) => setSideSlope(e.target.value)} />
+            <div className="space-y-2">
+              <Label htmlFor="channel-slope">Channel Slope ({slopeUnit})</Label>
+              <Input id="channel-slope" placeholder="e.g., 0.005" type="number" value={channelSlope} onChange={(e) => setChannelSlope(e.target.value)} />
             </div>
-          )}
+            <div className="space-y-2">
+              <Label htmlFor="manning-material">Channel Material (Manning's n)</Label>
+              <Select onValueChange={handleManningSelect} value={manningN}>
+                <SelectTrigger id="manning-material">
+                  <SelectValue placeholder="Select material" />
+                </SelectTrigger>
+                <SelectContent>
+                  {manningData.map(m => (
+                      <SelectItem key={m.label} value={m.value}>
+                          {m.label} ({m.value !== 'custom' && `n=${m.value}`})
+                      </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <Button className="w-full" onClick={calculateResults}>Calculate</Button>
-        </CardContent>
-      </Card>
+            {manningN === 'custom' && (
+              <div className="space-y-2 animate-in fade-in">
+                <Label htmlFor="manning-n">Custom Manning's Roughness (n)</Label>
+                <Input id="manning-n" placeholder="Enter custom 'n' value" type="number" value={customManningN} onChange={(e) => setCustomManningN(e.target.value)} />
+              </div>
+            )}
+            
+            <div className="space-y-2">
+              <Label htmlFor="channel-shape">Channel Shape</Label>
+              <Select onValueChange={(value) => setChannelShape(value as Shape)} value={channelShape}>
+                <SelectTrigger id="channel-shape">
+                  <SelectValue placeholder="Select shape" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="rectangular">Rectangular</SelectItem>
+                  <SelectItem value="trapezoidal">Trapezoidal</SelectItem>
+                  <SelectItem value="triangular" disabled>Triangular (coming soon)</SelectItem>
+                  <SelectItem value="circular" disabled>Circular (coming soon)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+                <Label htmlFor="bottom-width">Bottom Width ({lengthUnit})</Label>
+                <Input id="bottom-width" placeholder={isMetric ? "e.g., 5" : "e.g., 16"} type="number" value={bottomWidth} onChange={(e) => setBottomWidth(e.target.value)} />
+            </div>
 
-      <div className="lg:col-span-2 space-y-8">
+            {channelShape === 'trapezoidal' && (
+              <div className="space-y-2 animate-in fade-in">
+                <Label htmlFor="side-slope">Side Slope (H:1V)</Label>
+                <Input id="side-slope" placeholder="e.g., 2" type="number" value={sideSlope} onChange={(e) => setSideSlope(e.target.value)} />
+              </div>
+            )}
+
+            <Button className="w-full" onClick={calculateResults}>Calculate</Button>
+          </CardContent>
+        </Card>
+      </div>
+
+
+      <div className="lg:col-span-1 space-y-8">
         {error && (
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
@@ -330,12 +333,12 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="flex justify-between items-baseline bg-secondary p-3 rounded-lg">
-                    <Label className="text-sm text-muted-foreground">Normal Flow Depth ({lengthUnit})</Label>
-                    <p className="text-xl font-bold">{results?.flowDepth ?? '-'}</p>
+                    <Label className="text-sm text-muted-foreground">Normal Flow Depth</Label>
+                    <p className="text-xl font-bold">{results?.flowDepth ?? '-'} <span className="text-sm font-normal text-muted-foreground">{results ? lengthUnit : ''}</span></p>
                 </div>
                 <div className="flex justify-between items-baseline bg-secondary p-3 rounded-lg">
-                    <Label className="text-sm text-muted-foreground">Flow Velocity ({velocityUnit})</Label>
-                    <p className="text-xl font-bold">{results?.flowVelocity ?? '-'}</p>
+                    <Label className="text-sm text-muted-foreground">Flow Velocity</Label>
+                    <p className="text-xl font-bold">{results?.flowVelocity ?? '-'} <span className="text-sm font-normal text-muted-foreground">{results ? velocityUnit : ''}</span></p>
                 </div>
                 <div className="flex justify-between items-baseline bg-secondary p-3 rounded-lg">
                     <Label className="text-sm text-muted-foreground">Froude Number</Label>
@@ -351,16 +354,16 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
                 </CardHeader>
                 <CardContent className="space-y-4">
                      <div className="flex justify-between items-baseline bg-secondary p-3 rounded-lg">
-                        <Label className="text-sm text-muted-foreground">Design Freeboard ({lengthUnit})</Label>
-                        <p className="text-xl font-bold">{results?.controllingFreeboard ?? '-'}</p>
+                        <Label className="text-sm text-muted-foreground">Design Freeboard</Label>
+                        <p className="text-xl font-bold">{results?.controllingFreeboard ?? '-'} <span className="text-sm font-normal text-muted-foreground">{results ? lengthUnit : ''}</span></p>
                     </div>
                     <div className="flex justify-between items-baseline bg-secondary p-3 rounded-lg">
-                        <Label className="text-sm text-muted-foreground">Total Channel Depth ({lengthUnit})</Label>
-                        <p className="text-xl font-bold">{results?.totalDepth ?? '-'}</p>
+                        <Label className="text-sm text-muted-foreground">Total Channel Depth</Label>
+                        <p className="text-xl font-bold">{results?.totalDepth ?? '-'} <span className="text-sm font-normal text-muted-foreground">{results ? lengthUnit : ''}</span></p>
                     </div>
                      <div className="flex justify-between items-baseline bg-secondary p-3 rounded-lg">
-                        <Label className="text-sm text-muted-foreground">Top Width of Channel ({lengthUnit})</Label>
-                        <p className="text-xl font-bold">{results?.topWidth ?? '-'}</p>
+                        <Label className="text-sm text-muted-foreground">Top Width of Channel</Label>
+                        <p className="text-xl font-bold">{results?.topWidth ?? '-'} <span className="text-sm font-normal text-muted-foreground">{results ? lengthUnit : ''}</span></p>
                     </div>
                 </CardContent>
             </Card>
@@ -372,7 +375,7 @@ export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
             <CardDescription>A cross-section of the designed channel.</CardDescription>
           </CardHeader>
           <CardContent className="bg-muted min-h-[450px] rounded-lg p-4 flex items-start">
-             {results && channelShape ? (
+             {results && channelShape && parseFloat(bottomWidth) > 0 ? (
               <ChannelVisualization
                 shape={channelShape as 'rectangular' | 'trapezoidal'}
                 bottomWidth={parseFloat(bottomWidth)}

@@ -1,0 +1,166 @@
+/* Enhanced Formula Display Styles */
+.formula-display {
+  font-family: 'Computer Modern', 'Latin Modern Math', 'KaTeX_Main', 'Times New Roman', serif;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+}
+
+/* Mathematical fractions */
+.math-fraction {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  vertical-align: middle;
+  margin: 0 0.3em;
+  font-size: 0.95em;
+}
+
+.math-numerator {
+  border-bottom: 1.5px solid currentColor;
+  padding: 0.1em 0.2em;
+  margin-bottom: 0.05em;
+  font-size: 0.9em;
+  min-width: 1em;
+  text-align: center;
+}
+
+.math-denominator {
+  font-size: 0.9em;
+  margin-top: 0.05em;
+  padding: 0.1em 0.2em;
+  min-width: 1em;
+  text-align: center;
+}
+
+/* Enhanced superscripts and subscripts */
+.math-superscript {
+  font-size: 0.75em;
+  vertical-align: super;
+  line-height: 0;
+  margin-left: 0.1em;
+  color: #94a3b8; /* slate-400 */
+}
+
+.math-subscript {
+  font-size: 0.75em;
+  vertical-align: sub;
+  line-height: 0;
+  margin-left: 0.1em;
+  color: #94a3b8; /* slate-400 */
+}
+
+/* Square root styling */
+.math-sqrt {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #60a5fa; /* blue-400 */
+  margin-right: 0.1em;
+}
+
+.math-sqrt-content {
+  border-top: 1px solid currentColor;
+  padding-top: 0.1em;
+  margin-left: 0.05em;
+}
+
+/* Greek letters */
+.math-greek {
+  font-family: 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 1.05em;
+  color: #a78bfa; /* violet-400 */
+  margin: 0 0.05em;
+}
+
+/* Mathematical operators */
+.math-operator {
+  margin: 0 0.2em;
+  font-size: 1.1em;
+  color: #fbbf24; /* amber-400 */
+  font-weight: 500;
+}
+
+.math-equals {
+  margin: 0 0.3em;
+  font-size: 1.1em;
+  color: #34d399; /* emerald-400 */
+  font-weight: 600;
+}
+
+/* Formula container styling */
+.formula-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.formula-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+  pointer-events: none;
+}
+
+/* Variable highlighting in formulas */
+.formula-display {
+  --variable-color: #60a5fa; /* blue-400 */
+  --constant-color: #fbbf24; /* amber-400 */
+  --result-color: #34d399; /* emerald-400 */
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .formula-display {
+    font-size: 1.25rem;
+    line-height: 1.3;
+  }
+  
+  .formula-container {
+    padding: 1rem;
+  }
+  
+  .math-fraction {
+    font-size: 0.85em;
+    margin: 0 0.2em;
+  }
+  
+  .math-superscript,
+  .math-subscript {
+    font-size: 0.7em;
+  }
+}
+
+@media (max-width: 480px) {
+  .formula-display {
+    font-size: 1.1rem;
+  }
+  
+  .formula-container {
+    padding: 0.75rem;
+  }
+}
+
+/* Animation for formula appearance */
+.formula-container {
+  animation: fadeInMath 0.5s ease-out;
+}
+
+@keyframes fadeInMath {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Enhanced math typography */
+.formula-display {
+  font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1, 'ss01' 1;
+  text-rendering: optimizeLegibility;
+}

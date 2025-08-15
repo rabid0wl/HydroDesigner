@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import type { Units } from "@/app/page";
+import { useProjectData } from "@/context/ProjectDataContext";
 
 interface PumpDesignProps {
   units: Units;
@@ -24,12 +25,27 @@ const usChartData = [
 ];
 
 export function PumpDesign({ units }: PumpDesignProps) {
+  const { pumpDesignInputs, setPumpDesignInputs } = useProjectData();
   const isMetric = units === 'metric';
 
   const flowUnit = isMetric ? 'm³/h' : 'gpm';
   const headUnit = isMetric ? 'm' : 'ft';
   const tempUnit = isMetric ? '°C' : '°F';
   const powerUnit = isMetric ? 'kW' : 'hp';
+
+  // Use context state instead of local state
+  const {
+    designFlow,
+    totalHead,
+    fluidType,
+    fluidTemp
+  } = pumpDesignInputs;
+
+  // Helper functions to update context
+  const setDesignFlow = (value: string) => setPumpDesignInputs({ designFlow: value });
+  const setTotalHead = (value: string) => setPumpDesignInputs({ totalHead: value });
+  const setFluidType = (value: string) => setPumpDesignInputs({ fluidType: value });
+  const setFluidTemp = (value: string) => setPumpDesignInputs({ fluidTemp: value });
   
   const chartData = isMetric ? metricChartData : usChartData;
   const selectedPump = isMetric ? {
@@ -57,19 +73,42 @@ export function PumpDesign({ units }: PumpDesignProps) {
         <CardContent className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="design-flow">Design Flow Rate ({flowUnit})</Label>
-            <Input id="design-flow" placeholder={isMetric ? "e.g., 150" : "e.g., 660"} type="number" />
+            <Input
+              id="design-flow"
+              placeholder={isMetric ? "e.g., 150" : "e.g., 660"}
+              type="number"
+              value={designFlow}
+              onChange={(e) => setDesignFlow(e.target.value)}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="total-head">Total Dynamic Head ({headUnit})</Label>
-            <Input id="total-head" placeholder={isMetric ? "e.g., 50" : "e.g., 164"} type="number" />
+            <Input
+              id="total-head"
+              placeholder={isMetric ? "e.g., 50" : "e.g., 164"}
+              type="number"
+              value={totalHead}
+              onChange={(e) => setTotalHead(e.target.value)}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="fluid-type">Fluid Type</Label>
-            <Input id="fluid-type" placeholder="e.g., Water" />
+            <Input
+              id="fluid-type"
+              placeholder="e.g., Water"
+              value={fluidType}
+              onChange={(e) => setFluidType(e.target.value)}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="fluid-temp">Fluid Temperature ({tempUnit})</Label>
-            <Input id="fluid-temp" placeholder={isMetric ? "e.g., 20" : "e.g., 68"} type="number" />
+            <Input
+              id="fluid-temp"
+              placeholder={isMetric ? "e.g., 20" : "e.g., 68"}
+              type="number"
+              value={fluidTemp}
+              onChange={(e) => setFluidTemp(e.target.value)}
+            />
           </div>
           <Button className="w-full">Find Pumps</Button>
         </CardContent>

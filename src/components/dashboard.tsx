@@ -22,7 +22,14 @@ export function Dashboard() {
             <p className="text-muted-foreground mb-6">Your all-in-one solution for hydraulic and infrastructure design. Streamline your calculations, optimize your designs, and leverage AI for smarter engineering solutions.</p>
           </div>
           <div className="relative h-48 md:h-full w-full">
-             <Image src="https://placehold.co/600x400.png" alt="Engineering blueprint" layout="fill" objectFit="cover" data-ai-hint="engineering blueprint" />
+             <Image 
+                src="https://placehold.co/600x400.png" 
+                alt="Engineering blueprint" 
+                fill 
+                className="object-cover"
+                data-ai-hint="engineering blueprint" 
+                priority
+              />
           </div>
         </div>
       </Card>

@@ -83,6 +83,7 @@ body {
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 }

@@ -1,0 +1,158 @@
+"use client";
+
+import { useState } from "react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertTriangle, CheckCircle } from "lucide-react";
+import { useProjectData } from "@/context/ProjectDataContext";
+import { InputForm } from "./input-form";
+import { ResultsDisplay } from "./results-display";
+import { ChannelVisualization } from "./visualization";
+import { 
+  ChannelInputs, 
+  HydraulicResults, 
+  ValidationError,
+  calculateChannelHydraulics,
+  generateOptimizedRatingCurve 
+} from "@/lib/hydraulics/open-channel";
+
+interface OpenChannelDesignProps {
+  units: 'metric' | 'imperial';
+}
+
+export function OpenChannelDesign({ units }: OpenChannelDesignProps) {
+  const { setChannelRatingCurve } = useProjectData();
+  const [results, setResults] = useState<HydraulicResults | null>(null);
+  const [currentInputs, setCurrentInputs] = useState<ChannelInputs | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+
+  const handleCalculate = async (inputs: ChannelInputs) => {
+    setLoading(true);
+    setError(null);
+    setWarnings([]);
+    setValidationErrors([]);
+    setResults(null);
+
+    try {
+      // Calculate hydraulic results
+      const calculationResult = calculateChannelHydraulics(inputs);
+      
+      if (!calculationResult.success) {
+        if (calculationResult.errors) {
+          setValidationErrors(calculationResult.errors);
+        }
+        setError(calculationResult.errors?.[0]?.message || 'Calculation failed');
+        return;
+      }
+
+      const hydraulicResults = calculationResult.data!;
+      
+      // Set warnings if any
+      if (calculationResult.warnings && calculationResult.warnings.length > 0) {
+        setWarnings(calculationResult.warnings);
+      }
+
+      // Generate rating curve in the background
+      try {
+        const ratingCurveResult = generateOptimizedRatingCurve(inputs, 25);
+        if (ratingCurveResult.success && ratingCurveResult.data) {
+          setChannelRatingCurve(ratingCurveResult.data);
+          
+          if (ratingCurveResult.warnings && ratingCurveResult.warnings.length > 0) {
+            setWarnings(prev => [...prev, ...ratingCurveResult.warnings!]);
+          }
+        }
+      } catch (ratingError) {
+        console.warn('Rating curve generation failed:', ratingError);
+        setWarnings(prev => [...prev, 'Rating curve generation failed - basic curve will be used']);
+      }
+
+      setResults(hydraulicResults);
+      setCurrentInputs(inputs);
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown calculation error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-8">
+      {/* Input Form */}
+      <InputForm 
+        units={units} 
+        onCalculate={handleCalculate}
+        loading={loading}
+        errors={validationErrors}
+      />
+
+      {/* Error Display */}
+      {error && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Calculation Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Warnings Display */}
+      {warnings.length > 0 && (
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Warnings</AlertTitle>
+          <AlertDescription>
+            <ul className="list-disc list-inside space-y-1">
+              {warnings.map((warning, index) => (
+                <li key={index}>{warning}</li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+
+
+      {/* Results Display */}
+      {results && (
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          {/* Results take up 2 columns on xl screens */}
+          <div className="xl:col-span-2">
+            <ResultsDisplay results={results} units={units} />
+          </div>
+          
+          {/* Visualization takes up 1 column on xl screens */}
+          <div className="xl:col-span-1">
+            {currentInputs && (
+              <ChannelVisualization 
+                results={results} 
+                geometry={currentInputs.geometry} 
+                units={units} 
+              />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Help Text when no results */}
+      {!results && !loading && !error && (
+        <div className="text-center py-12 text-muted-foreground">
+          <p className="text-lg mb-2">Open Channel Flow Design</p>
+          <p className="text-sm">
+            Enter your channel parameters above and click "Calculate Channel Design" to begin.
+          </p>
+          <div className="mt-4 text-xs space-y-1">
+            <p>• Supports rectangular, trapezoidal, triangular, and circular channels</p>
+            <p>• Calculates normal depth, critical depth, and flow characteristics</p>
+            <p>• Includes freeboard calculations and design recommendations</p>
+            <p>• Generates rating curves for flow analysis</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Re-export for backward compatibility
+export default OpenChannelDesign;

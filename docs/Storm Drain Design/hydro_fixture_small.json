@@ -1,0 +1,140 @@
+{
+  "criteria": {
+    "stormReturnPeriod": "10yr",
+    "use1008": true,
+    "minDiameterIn": 12,
+    "minCoverFt": 2.0,
+    "minVelocityFps": 2.0,
+    "maxVelocityFps": 12.0,
+    "minSlopeByDiameter": {
+      "12": 0.003,
+      "15": 0.0025,
+      "18": 0.002
+    },
+    "manholeDropTurnFt": 0.2,
+    "manholeDropStraightFt": 0.1,
+    "nMannings": 0.013
+  },
+  "idf": {
+    "interpolation": "loglog",
+    "points": [
+      {
+        "TcMin": 5,
+        "intensityInPerHr": 3.2
+      },
+      {
+        "TcMin": 10,
+        "intensityInPerHr": 2.6
+      },
+      {
+        "TcMin": 15,
+        "intensityInPerHr": 2.2
+      },
+      {
+        "TcMin": 20,
+        "intensityInPerHr": 2.0
+      },
+      {
+        "TcMin": 30,
+        "intensityInPerHr": 1.7
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "J1",
+      "rimElevFt": 298.5
+    },
+    {
+      "id": "J2",
+      "rimElevFt": 297.8
+    },
+    {
+      "id": "J3",
+      "rimElevFt": 296.9
+    },
+    {
+      "id": "J4",
+      "rimElevFt": 299.1
+    }
+  ],
+  "pipes": [
+    {
+      "id": "P1",
+      "fromNodeId": "J1",
+      "toNodeId": "J2",
+      "lengthFt": 200.0,
+      "diameterIn": 12,
+      "slopeFtPerFt": 0.003,
+      "isTurn": false
+    },
+    {
+      "id": "P2",
+      "fromNodeId": "J2",
+      "toNodeId": "J3",
+      "lengthFt": 300.0,
+      "diameterIn": 12,
+      "slopeFtPerFt": 0.0025,
+      "isTurn": true
+    },
+    {
+      "id": "P3",
+      "fromNodeId": "J4",
+      "toNodeId": "J2",
+      "lengthFt": 150.0,
+      "diameterIn": 12,
+      "slopeFtPerFt": 0.003,
+      "isTurn": false
+    }
+  ],
+  "tribs": [
+    {
+      "id": "T1",
+      "toNodeId": "J1",
+      "areaAc": 1.8,
+      "C": 0.85,
+      "TiMin": 5.0,
+      "LgutterFt": 200.0,
+      "VgutterFps": 3.0
+    },
+    {
+      "id": "T2",
+      "toNodeId": "J4",
+      "areaAc": 1.2,
+      "C": 0.75,
+      "TiMin": 4.0,
+      "LgutterFt": 150.0,
+      "VgutterFps": 3.0
+    }
+  ],
+  "candidateDiametersIn": [
+    12,
+    15,
+    18,
+    21,
+    24
+  ],
+  "maxIterations": 10,
+  "convergence": {
+    "maxRelQChange": 0.01,
+    "maxTcShiftMin": 0.1
+  },
+  "groundProfiles": [
+    {
+      "pipeId": "P1",
+      "groundElevUpFt": 298.2,
+      "groundElevDnFt": 298.0
+    },
+    {
+      "pipeId": "P2",
+      "groundElevUpFt": 297.7,
+      "groundElevDnFt": 297.1
+    },
+    {
+      "pipeId": "P3",
+      "groundElevUpFt": 299.0,
+      "groundElevDnFt": 298.0
+    }
+  ],
+  "notes": "Ready-to-run small network: 2 tributaries, 3 pipes, one junction with a turn drop at J2. Use log-log IDF interpolation. Full-flow capacity checks with Manning Kn=1.486."
+}

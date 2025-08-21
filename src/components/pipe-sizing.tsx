@@ -17,6 +17,7 @@ import { AlertTriangle, CheckCircle, Info, Calculator, DollarSign, Zap } from "l
 import type { Units } from "@/app/page";
 import { useProjectData } from "@/context/ProjectDataContext";
 import { FormulaReference, MultipleFormulaReference } from "@/components/ui/formula-reference";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { 
   PipeSizingCalculator, 
   createDefaultPipeSizingInputs,
@@ -152,10 +153,20 @@ export function PipeSizing({ units }: PipeSizingProps) {
     }).format(value);
   };
 
+  // Example of how to trigger an error (commented out by default)
+  // Uncomment the following line to see the error boundary in action:
+  // if (parseFloat(pipeSizingInputs.flowRate) < 0) throw new Error("Negative flow rate is not valid!");
+  
+  // For testing purposes, we can add a button to trigger an error
+  const throwError = () => {
+    throw new Error("This is a test error to demonstrate the ErrorBoundary");
+  };
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-      {/* Input Panel */}
-      <Card className="lg:col-span-1">
+    <ErrorBoundary>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* Input Panel */}
+        <Card className="lg:col-span-1">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calculator className="h-5 w-5" />
@@ -393,6 +404,15 @@ export function PipeSizing({ units }: PipeSizingProps) {
               'Calculate Pipe Sizes'
             )}
           </Button>
+          
+          {/* Button for testing ErrorBoundary - REMOVE IN PRODUCTION */}
+          {/* <Button 
+            variant="destructive" 
+            className="w-full mt-2"
+            onClick={throwError}
+          >
+            Trigger Error (Test ErrorBoundary)
+          </Button> */}
         </CardContent>
       </Card>
       
@@ -646,5 +666,6 @@ export function PipeSizing({ units }: PipeSizingProps) {
         </CardContent>
       </Card>
     </div>
+    </ErrorBoundary>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { z } from "zod";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,18 +9,44 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle, Info } from "lucide-react";
-import { ChannelShape, ChannelInputs, ValidationError } from "@/lib/hydraulics/open-channel";
-import { manningCoefficients, validateManningN } from "@/lib/hydraulics/open-channel";
+import { ChannelShape, ChannelInputs } from "@/lib/hydraulics/open-channel/types";
+import { manningCoefficients } from "@/lib/hydraulics/open-channel/manning";
 import { useProjectData } from "@/context/ProjectDataContext";
 
-interface InputFormProps {
+// Zod schema for validation
+const channelInputsSchema = z.object({
+  flowRate: z.number().positive("Flow rate must be positive"),
+  slope: z.number().positive("Channel slope must be positive").max(0.1, "Slope should be less than 0.1"),
+  manningN: z.number().positive("Manning's n must be positive").min(0.008, "Manning's n is unusually low").max(0.2, "Manning's n is unusually high"),
+  geometry: z.discriminatedUnion("shape", [
+    z.object({
+      shape: z.literal("rectangular"),
+      bottomWidth: z.number().positive("Bottom width must be positive"),
+    }),
+    z.object({
+      shape: z.literal("trapezoidal"),
+      bottomWidth: z.number().positive("Bottom width must be positive"),
+      sideSlope: z.number().nonnegative("Side slope must be non-negative").max(10, "Very steep side slopes may be unstable"),
+    }),
+    z.object({
+      shape: z.literal("triangular"),
+      sideSlope: z.number().positive("Side slope must be positive for triangular channels"),
+    }),
+    z.object({
+      shape: z.literal("circular"),
+      diameter: z.number().positive("Diameter must be positive"),
+    }),
+  ]),
+});
+
+interface FormProps {
   units: 'metric' | 'imperial';
   onCalculate: (inputs: ChannelInputs) => void;
   loading?: boolean;
-  errors?: ValidationError[];
+  errors?: any[];
 }
 
-export function InputForm({ units, onCalculate, loading, errors }: InputFormProps) {
+export function Form({ units, onCalculate, loading, errors }: FormProps) {
   const { openChannelInputs, setOpenChannelInputs } = useProjectData();
   
   // Use context state instead of local state
@@ -34,7 +61,7 @@ export function InputForm({ units, onCalculate, loading, errors }: InputFormProp
     diameter
   } = openChannelInputs;
 
-  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+  const [validationErrors, setValidationErrors] = useState<any[]>([]);
   const [warnings, setWarnings] = useState<string[]>([]);
 
   // Helper functions to update context
@@ -67,64 +94,60 @@ export function InputForm({ units, onCalculate, loading, errors }: InputFormProp
   };
 
   const validateInputs = (): boolean => {
-    const newErrors: ValidationError[] = [];
+    const newErrors: any[] = [];
     const newWarnings: string[] = [];
 
-    // Flow rate validation
-    const flowRateNum = parseFloat(flowRate);
-    if (!flowRate || isNaN(flowRateNum) || flowRateNum <= 0) {
-      newErrors.push({ field: 'flowRate', message: 'Flow rate must be a positive number', severity: 'error' });
-    }
-
-    // Slope validation
-    const slopeNum = parseFloat(channelSlope);
-    if (!channelSlope || isNaN(slopeNum) || slopeNum <= 0) {
-      newErrors.push({ field: 'slope', message: 'Channel slope must be a positive number', severity: 'error' });
-    } else if (slopeNum > 0.1) {
-      newWarnings.push('Very steep slope - results may be unrealistic for open channel flow');
-    }
-
-    // Manning's n validation
-    const nValue = manningN === 'custom' ? parseFloat(customManningN) : parseFloat(manningN);
-    const nValidation = validateManningN(nValue);
-    if (!nValidation.valid) {
-      newErrors.push({ field: 'manningN', message: nValidation.message || 'Invalid Manning\'s n', severity: 'error' });
-    } else if (nValidation.message) {
-      newWarnings.push(nValidation.message);
-    }
+    // Parse inputs
+    const parsedInputs = {
+      flowRate: parseFloat(flowRate),
+      slope: parseFloat(channelSlope),
+      manningN: manningN === 'custom' ? parseFloat(customManningN) : parseFloat(manningN),
+      geometry: {} as any
+    };
 
     // Geometry validation
     switch (channelShape) {
       case 'rectangular':
+        parsedInputs.geometry = {
+          shape: 'rectangular',
+          bottomWidth: parseFloat(bottomWidth)
+        };
+        break;
       case 'trapezoidal':
-        const widthNum = parseFloat(bottomWidth);
-        if (!bottomWidth || isNaN(widthNum) || widthNum <= 0) {
-          newErrors.push({ field: 'bottomWidth', message: 'Bottom width must be a positive number', severity: 'error' });
-        }
-        
-        if (channelShape === 'trapezoidal') {
-          const slopeSideNum = parseFloat(sideSlope);
-          if (!sideSlope || isNaN(slopeSideNum) || slopeSideNum < 0) {
-            newErrors.push({ field: 'sideSlope', message: 'Side slope must be a non-negative number', severity: 'error' });
-          } else if (slopeSideNum > 10) {
-            newWarnings.push('Very steep side slopes may be unstable');
-          }
-        }
+        parsedInputs.geometry = {
+          shape: 'trapezoidal',
+          bottomWidth: parseFloat(bottomWidth),
+          sideSlope: parseFloat(sideSlope)
+        };
         break;
-
       case 'triangular':
-        const triangularSlopeNum = parseFloat(sideSlope);
-        if (!sideSlope || isNaN(triangularSlopeNum) || triangularSlopeNum <= 0) {
-          newErrors.push({ field: 'sideSlope', message: 'Side slope must be a positive number for triangular channels', severity: 'error' });
-        }
+        parsedInputs.geometry = {
+          shape: 'triangular',
+          sideSlope: parseFloat(sideSlope)
+        };
         break;
-
       case 'circular':
-        const diameterNum = parseFloat(diameter);
-        if (!diameter || isNaN(diameterNum) || diameterNum <= 0) {
-          newErrors.push({ field: 'diameter', message: 'Diameter must be a positive number', severity: 'error' });
-        }
+        parsedInputs.geometry = {
+          shape: 'circular',
+          diameter: parseFloat(diameter)
+        };
         break;
+    }
+
+    // Zod validation
+    try {
+      channelInputsSchema.parse(parsedInputs);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        error.errors.forEach((err) => {
+          newErrors.push({ field: err.path.join('.'), message: err.message, severity: 'error' });
+        });
+      }
+    }
+
+    // Additional warnings
+    if (parsedInputs.slope > 0.05) {
+      newWarnings.push('Very steep slope - results may be unrealistic for open channel flow');
     }
 
     setValidationErrors(newErrors);
@@ -189,11 +212,11 @@ export function InputForm({ units, onCalculate, loading, errors }: InputFormProp
               step="any"
               value={flowRate}
               onChange={(e) => setFlowRate(e.target.value)}
-              className={allErrors.some(e => e.field === 'flowRate') ? 'border-red-500' : ''}
+              className={allErrors.some(e => e.field.includes('flowRate')) ? 'border-red-500' : ''}
             />
-            {allErrors.some(e => e.field === 'flowRate') && (
+            {allErrors.some(e => e.field.includes('flowRate')) && (
               <p className="text-xs text-red-500 mt-1">
-                {allErrors.find(e => e.field === 'flowRate')?.message}
+                {allErrors.find(e => e.field.includes('flowRate'))?.message}
               </p>
             )}
           </div>
@@ -209,11 +232,11 @@ export function InputForm({ units, onCalculate, loading, errors }: InputFormProp
               step="any"
               value={channelSlope}
               onChange={(e) => setChannelSlope(e.target.value)}
-              className={allErrors.some(e => e.field === 'slope') ? 'border-red-500' : ''}
+              className={allErrors.some(e => e.field.includes('slope')) ? 'border-red-500' : ''}
             />
-            {allErrors.some(e => e.field === 'slope') && (
+            {allErrors.some(e => e.field.includes('slope')) && (
               <p className="text-xs text-red-500 mt-1">
-                {allErrors.find(e => e.field === 'slope')?.message}
+                {allErrors.find(e => e.field.includes('slope'))?.message}
               </p>
             )}
           </div>
@@ -243,15 +266,20 @@ export function InputForm({ units, onCalculate, loading, errors }: InputFormProp
           {manningN === 'custom' && (
             <div className="space-y-2 animate-in fade-in">
               <Label htmlFor="manning-n">Custom Manning's Roughness (n)</Label>
-              <Input 
-                id="manning-n" 
-                placeholder="Enter custom 'n' value" 
-                type="number" 
+              <Input
+                id="manning-n"
+                placeholder="Enter custom 'n' value"
+                type="number"
                 step="any"
-                value={customManningN} 
+                value={customManningN}
                 onChange={(e) => setCustomManningN(e.target.value)}
-                className={allErrors.some(e => e.field === 'manningN') ? 'border-red-500' : ''}
+                className={allErrors.some(e => e.field.includes('manningN')) ? 'border-red-500' : ''}
               />
+              {allErrors.some(e => e.field.includes('manningN')) && (
+                <p className="text-xs text-red-500 mt-1">
+                  {allErrors.find(e => e.field.includes('manningN'))?.message}
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -287,11 +315,11 @@ export function InputForm({ units, onCalculate, loading, errors }: InputFormProp
                 step="any"
                 value={bottomWidth}
                 onChange={(e) => setBottomWidth(e.target.value)}
-                className={allErrors.some(e => e.field === 'bottomWidth') ? 'border-red-500' : ''}
+                className={allErrors.some(e => e.field.includes('bottomWidth')) ? 'border-red-500' : ''}
               />
-              {allErrors.some(e => e.field === 'bottomWidth') && (
+              {allErrors.some(e => e.field.includes('bottomWidth')) && (
                 <p className="text-xs text-red-500 mt-1">
-                  {allErrors.find(e => e.field === 'bottomWidth')?.message}
+                  {allErrors.find(e => e.field.includes('bottomWidth'))?.message}
                 </p>
               )}
             </div>
@@ -309,11 +337,11 @@ export function InputForm({ units, onCalculate, loading, errors }: InputFormProp
                 step="any"
                 value={sideSlope}
                 onChange={(e) => setSideSlope(e.target.value)}
-                className={allErrors.some(e => e.field === 'sideSlope') ? 'border-red-500' : ''}
+                className={allErrors.some(e => e.field.includes('sideSlope')) ? 'border-red-500' : ''}
               />
-              {allErrors.some(e => e.field === 'sideSlope') && (
+              {allErrors.some(e => e.field.includes('sideSlope')) && (
                 <p className="text-xs text-red-500 mt-1">
-                  {allErrors.find(e => e.field === 'sideSlope')?.message}
+                  {allErrors.find(e => e.field.includes('sideSlope'))?.message}
                 </p>
               )}
               <p className="text-xs text-muted-foreground">
@@ -334,11 +362,11 @@ export function InputForm({ units, onCalculate, loading, errors }: InputFormProp
                 step="any"
                 value={diameter}
                 onChange={(e) => setDiameter(e.target.value)}
-                className={allErrors.some(e => e.field === 'diameter') ? 'border-red-500' : ''}
+                className={allErrors.some(e => e.field.includes('diameter')) ? 'border-red-500' : ''}
               />
-              {allErrors.some(e => e.field === 'diameter') && (
+              {allErrors.some(e => e.field.includes('diameter')) && (
                 <p className="text-xs text-red-500 mt-1">
-                  {allErrors.find(e => e.field === 'diameter')?.message}
+                  {allErrors.find(e => e.field.includes('diameter'))?.message}
                 </p>
               )}
             </div>

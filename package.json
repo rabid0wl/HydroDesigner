@@ -10,7 +10,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check": "npm run lint && npm run typecheck && npm run test"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.14.1",
@@ -42,7 +43,6 @@
     "date-fns": "^3.6.0",
     "dotenv": "^16.5.0",
     "embla-carousel-react": "^8.6.0",
-    "firebase": "^11.9.1",
     "genkit": "^1.14.1",
     "lucide-react": "^0.475.0",
     "next": "15.3.3",

@@ -1,0 +1,154 @@
+﻿2025-08-23T01:40:40.4924463Z Current runner version: '2.328.0'
+2025-08-23T01:40:40.4958378Z ##[group]Runner Image Provisioner
+2025-08-23T01:40:40.4959571Z Hosted Compute Agent
+2025-08-23T01:40:40.4960395Z Version: 20250821.380
+2025-08-23T01:40:40.4961593Z Commit: 438d12cb4fe092871db9867344e3bc0bc5319035
+2025-08-23T01:40:40.4963032Z Build Date: 2025-08-21T20:49:43Z
+2025-08-23T01:40:40.4964181Z ##[endgroup]
+2025-08-23T01:40:40.4965037Z ##[group]Operating System
+2025-08-23T01:40:40.4965968Z Ubuntu
+2025-08-23T01:40:40.4966808Z 24.04.2
+2025-08-23T01:40:40.4967620Z LTS
+2025-08-23T01:40:40.4968445Z ##[endgroup]
+2025-08-23T01:40:40.4969432Z ##[group]Runner Image
+2025-08-23T01:40:40.4970551Z Image: ubuntu-24.04
+2025-08-23T01:40:40.4971422Z Version: 20250818.1.0
+2025-08-23T01:40:40.4973459Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250818.1/images/ubuntu/Ubuntu2404-Readme.md
+2025-08-23T01:40:40.4976195Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250818.1
+2025-08-23T01:40:40.4978020Z ##[endgroup]
+2025-08-23T01:40:40.4979879Z ##[group]GITHUB_TOKEN Permissions
+2025-08-23T01:40:40.4983087Z Contents: read
+2025-08-23T01:40:40.4984019Z Metadata: read
+2025-08-23T01:40:40.4984797Z Packages: read
+2025-08-23T01:40:40.4985741Z ##[endgroup]
+2025-08-23T01:40:40.4988549Z Secret source: Actions
+2025-08-23T01:40:40.4990365Z Prepare workflow directory
+2025-08-23T01:40:40.5464110Z Prepare all required actions
+2025-08-23T01:40:40.5522692Z Getting action download info
+2025-08-23T01:40:40.7802337Z Download action repository 'actions/checkout@v4' (SHA:08eba0b27e820071cde6df949e0beb9ba4906955)
+2025-08-23T01:40:40.8500350Z Download action repository 'pnpm/action-setup@v4' (SHA:a7487c7e89a18df4991f7f222e4898a00d66ddda)
+2025-08-23T01:40:41.1132826Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2025-08-23T01:40:41.2867729Z Complete job name: build (20)
+2025-08-23T01:40:41.3472260Z ##[group]Run actions/checkout@v4
+2025-08-23T01:40:41.3473101Z with:
+2025-08-23T01:40:41.3473517Z   repository: rabid0wl/HydroDesigner
+2025-08-23T01:40:41.3474170Z   token: ***
+2025-08-23T01:40:41.3474529Z   ssh-strict: true
+2025-08-23T01:40:41.3474905Z   ssh-user: git
+2025-08-23T01:40:41.3475286Z   persist-credentials: true
+2025-08-23T01:40:41.3475726Z   clean: true
+2025-08-23T01:40:41.3476111Z   sparse-checkout-cone-mode: true
+2025-08-23T01:40:41.3476582Z   fetch-depth: 1
+2025-08-23T01:40:41.3476951Z   fetch-tags: false
+2025-08-23T01:40:41.3477330Z   show-progress: true
+2025-08-23T01:40:41.3477716Z   lfs: false
+2025-08-23T01:40:41.3478065Z   submodules: false
+2025-08-23T01:40:41.3478455Z   set-safe-directory: true
+2025-08-23T01:40:41.3479083Z ##[endgroup]
+2025-08-23T01:40:41.4521055Z Syncing repository: rabid0wl/HydroDesigner
+2025-08-23T01:40:41.4523854Z ##[group]Getting Git version info
+2025-08-23T01:40:41.4525144Z Working directory is '/home/runner/work/HydroDesigner/HydroDesigner'
+2025-08-23T01:40:41.4526941Z [command]/usr/bin/git version
+2025-08-23T01:40:41.4550308Z git version 2.51.0
+2025-08-23T01:40:41.4577660Z ##[endgroup]
+2025-08-23T01:40:41.4592668Z Temporarily overriding HOME='/home/runner/work/_temp/f68ccf20-9793-4aaa-b48d-3da87c0dd18f' before making global git config changes
+2025-08-23T01:40:41.4594963Z Adding repository directory to the temporary git global config as a safe directory
+2025-08-23T01:40:41.4606338Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/HydroDesigner/HydroDesigner
+2025-08-23T01:40:41.4640355Z Deleting the contents of '/home/runner/work/HydroDesigner/HydroDesigner'
+2025-08-23T01:40:41.4643842Z ##[group]Initializing the repository
+2025-08-23T01:40:41.4647572Z [command]/usr/bin/git init /home/runner/work/HydroDesigner/HydroDesigner
+2025-08-23T01:40:41.4702758Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-08-23T01:40:41.4704170Z hint: is subject to change. To configure the initial branch name to use in all
+2025-08-23T01:40:41.4705556Z hint: of your new repositories, which will suppress this warning, call:
+2025-08-23T01:40:41.4706737Z hint:
+2025-08-23T01:40:41.4707565Z hint: 	git config --global init.defaultBranch <name>
+2025-08-23T01:40:41.4708574Z hint:
+2025-08-23T01:40:41.4709546Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-08-23T01:40:41.4711131Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-08-23T01:40:41.4712651Z hint:
+2025-08-23T01:40:41.4713312Z hint: 	git branch -m <name>
+2025-08-23T01:40:41.4714056Z hint:
+2025-08-23T01:40:41.4715053Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-08-23T01:40:41.4716908Z Initialized empty Git repository in /home/runner/work/HydroDesigner/HydroDesigner/.git/
+2025-08-23T01:40:41.4719790Z [command]/usr/bin/git remote add origin https://github.com/rabid0wl/HydroDesigner
+2025-08-23T01:40:41.4762920Z ##[endgroup]
+2025-08-23T01:40:41.4764132Z ##[group]Disabling automatic garbage collection
+2025-08-23T01:40:41.4767545Z [command]/usr/bin/git config --local gc.auto 0
+2025-08-23T01:40:41.4798939Z ##[endgroup]
+2025-08-23T01:40:41.4800126Z ##[group]Setting up auth
+2025-08-23T01:40:41.4806504Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-08-23T01:40:41.4839359Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-08-23T01:40:41.5126592Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-08-23T01:40:41.5160093Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-08-23T01:40:41.5396052Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-08-23T01:40:41.5429420Z ##[endgroup]
+2025-08-23T01:40:41.5430200Z ##[group]Fetching the repository
+2025-08-23T01:40:41.5452339Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +09567b6ad444ce05a54e659027df6d8251ce8a88:refs/remotes/origin/main
+2025-08-23T01:40:41.8137424Z From https://github.com/rabid0wl/HydroDesigner
+2025-08-23T01:40:41.8138808Z  * [new ref]         09567b6ad444ce05a54e659027df6d8251ce8a88 -> origin/main
+2025-08-23T01:40:41.8165649Z ##[endgroup]
+2025-08-23T01:40:41.8166681Z ##[group]Determining the checkout info
+2025-08-23T01:40:41.8167835Z ##[endgroup]
+2025-08-23T01:40:41.8172426Z [command]/usr/bin/git sparse-checkout disable
+2025-08-23T01:40:41.8209178Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-08-23T01:40:41.8236380Z ##[group]Checking out the ref
+2025-08-23T01:40:41.8239495Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2025-08-23T01:40:41.8486295Z Switched to a new branch 'main'
+2025-08-23T01:40:41.8487640Z branch 'main' set up to track 'origin/main'.
+2025-08-23T01:40:41.8495372Z ##[endgroup]
+2025-08-23T01:40:41.8530240Z [command]/usr/bin/git log -1 --format=%H
+2025-08-23T01:40:41.8551316Z 09567b6ad444ce05a54e659027df6d8251ce8a88
+2025-08-23T01:40:41.8746657Z ##[group]Run pnpm/action-setup@v4
+2025-08-23T01:40:41.8747161Z with:
+2025-08-23T01:40:41.8747489Z   version: 9
+2025-08-23T01:40:41.8747836Z   dest: ~/setup-pnpm
+2025-08-23T01:40:41.8748234Z   run_install: null
+2025-08-23T01:40:41.8748631Z   package_json_file: package.json
+2025-08-23T01:40:41.8749093Z   standalone: false
+2025-08-23T01:40:41.8749458Z ##[endgroup]
+2025-08-23T01:40:41.9272855Z ##[group]Running self-installer...
+2025-08-23T01:40:42.4784762Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2025-08-23T01:40:42.4903913Z Packages: +1
+2025-08-23T01:40:42.4904906Z +
+2025-08-23T01:40:42.9235637Z Progress: resolved 1, reused 0, downloaded 1, added 1, done
+2025-08-23T01:40:42.9494089Z 
+2025-08-23T01:40:42.9494382Z dependencies:
+2025-08-23T01:40:42.9494852Z + pnpm 9.15.9 (10.15.0 is available)
+2025-08-23T01:40:42.9495463Z 
+2025-08-23T01:40:42.9522526Z Done in 852ms
+2025-08-23T01:40:42.9680225Z ##[endgroup]
+2025-08-23T01:40:42.9684747Z Installation Completed!
+2025-08-23T01:40:42.9824384Z ##[group]Run actions/setup-node@v4
+2025-08-23T01:40:42.9824709Z with:
+2025-08-23T01:40:42.9824924Z   node-version: 20
+2025-08-23T01:40:42.9825142Z   cache: pnpm
+2025-08-23T01:40:42.9825364Z   always-auth: false
+2025-08-23T01:40:42.9825592Z   check-latest: false
+2025-08-23T01:40:42.9825958Z   token: ***
+2025-08-23T01:40:42.9826171Z env:
+2025-08-23T01:40:42.9826436Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2025-08-23T01:40:42.9826757Z ##[endgroup]
+2025-08-23T01:40:43.1543027Z Found in cache @ /opt/hostedtoolcache/node/20.19.4/x64
+2025-08-23T01:40:43.1549678Z ##[group]Environment details
+2025-08-23T01:40:43.4127341Z node: v20.19.4
+2025-08-23T01:40:43.4128696Z npm: 10.8.2
+2025-08-23T01:40:43.4129073Z yarn: 1.22.22
+2025-08-23T01:40:43.4130106Z ##[endgroup]
+2025-08-23T01:40:43.4153918Z [command]/home/runner/setup-pnpm/node_modules/.bin/pnpm store path --silent
+2025-08-23T01:40:43.7951086Z /home/runner/setup-pnpm/node_modules/.bin/store/v3
+2025-08-23T01:40:43.8050608Z ##[error]Dependencies lock file is not found in /home/runner/work/HydroDesigner/HydroDesigner. Supported file patterns: pnpm-lock.yaml
+2025-08-23T01:40:43.8264778Z Post job cleanup.
+2025-08-23T01:40:43.8791460Z Pruning is unnecessary.
+2025-08-23T01:40:43.8915752Z Post job cleanup.
+2025-08-23T01:40:43.9828023Z [command]/usr/bin/git version
+2025-08-23T01:40:43.9863761Z git version 2.51.0
+2025-08-23T01:40:43.9906763Z Temporarily overriding HOME='/home/runner/work/_temp/e6daa5c0-136a-4edf-8f00-5ee95e079745' before making global git config changes
+2025-08-23T01:40:43.9908236Z Adding repository directory to the temporary git global config as a safe directory
+2025-08-23T01:40:43.9913165Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/HydroDesigner/HydroDesigner
+2025-08-23T01:40:43.9947777Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-08-23T01:40:43.9979430Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-08-23T01:40:44.0199464Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-08-23T01:40:44.0219836Z http.https://github.com/.extraheader
+2025-08-23T01:40:44.0232742Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2025-08-23T01:40:44.0262775Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-08-23T01:40:44.0581038Z Cleaning up orphan processes

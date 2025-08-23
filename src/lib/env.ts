@@ -1,4 +1,12 @@
 import { z } from 'zod';
+import { config } from 'dotenv';
+import { resolve } from 'path';
+
+// Load environment variables from .env file if not already loaded
+// This is needed for commands like `next lint` that don't automatically load .env files
+if (!process.env.NEXT_PUBLIC_ENV) {
+  config({ path: resolve(process.cwd(), '.env') });
+}
 
 // Define the schema for environment variables
 export const envSchema = z.object({
